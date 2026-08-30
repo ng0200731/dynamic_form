@@ -1,18 +1,15 @@
 import type { Page, PageSummary } from '../types';
-import type { Mode } from '../hooks/usePages';
 import styles from './Toolbar.module.css';
 
 interface Props {
   page: Page;
   pages: PageSummary[];
-  mode: Mode;
-  onModeChange: (m: Mode) => void;
   onReparent: (parentId: string | null) => void;
   showBack?: boolean;
   onBack?: () => void;
 }
 
-export function Toolbar({ page, pages, mode, onModeChange, onReparent, showBack, onBack }: Props) {
+export function Toolbar({ page, pages, onReparent, showBack, onBack }: Props) {
   return (
     <div className={styles.toolbar}>
       <div className={styles.left}>
@@ -43,33 +40,7 @@ export function Toolbar({ page, pages, mode, onModeChange, onReparent, showBack,
           </select>
         </label>
       </div>
-
-      <div className={styles.right}>
-        <div className={styles.toggle}>
-          <button
-            className={mode === 'edit' ? styles.active : ''}
-            onClick={() => onModeChange('edit')}
-          >
-            Edit
-          </button>
-          {mode === 'global' ? (
-            <button className={styles.active} disabled>
-              Global
-            </button>
-          ) : mode === 'pages' ? (
-            <button className={styles.active} disabled>
-              Pages
-            </button>
-          ) : (
-            <button
-              className={mode === 'preview' ? styles.active : ''}
-              onClick={() => onModeChange('preview')}
-            >
-              Preview
-            </button>
-          )}
-        </div>
-      </div>
     </div>
   );
 }
+

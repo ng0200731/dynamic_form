@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState } from 'react';
 import { usePages } from './hooks/usePages';
 import { Sidebar } from './components/Sidebar';
 import { Toolbar } from './components/Toolbar';
@@ -7,7 +7,6 @@ import { Preview } from './components/Preview';
 import { OptionListsPanel } from './components/OptionListsPanel';
 import { GlobalViewPanel } from './components/GlobalViewPanel';
 import { PagesViewPanel } from './components/PagesViewPanel';
-import { api } from './api';
 import styles from './App.module.css';
 
 export function App() {
@@ -94,7 +93,7 @@ export function App() {
             />
             <div className={styles.content}>
               {mode === 'edit' ? (
-                <Editor page={currentPage} onSave={saveCurrent} />
+                <Editor page={currentPage} onSave={saveCurrent} onPreview={() => setMode('preview')} />
               ) : mode === 'lists' ? (
                 <OptionListsPanel page={currentPage} onChanged={loadPage} />
               ) : mode === 'global' ? (
@@ -107,6 +106,8 @@ export function App() {
                     setCameFromPages(true);
                     setMode('edit');
                   }}
+                  loadPage={loadPage}
+                  setMode={setMode}
                 />
               ) : (
                 <Preview page={currentPage} onNavigate={navigate} onBack={goBack} />

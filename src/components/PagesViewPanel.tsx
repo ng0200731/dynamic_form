@@ -6,9 +6,11 @@ import styles from './OptionListsPanel.module.css';
 interface Props {
   onSelect: (id: string) => void;
   onEdit: (id: string) => void;
+  loadPage: (id: string) => void;
+  setMode: (m: 'edit' | 'lists' | 'preview' | 'global' | 'pages') => void;
 }
 
-export function PagesViewPanel({ onSelect, onEdit }: Props) {
+export function PagesViewPanel({ onSelect, onEdit, loadPage, setMode }: Props) {
   const [pages, setPages] = useState<PageSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -59,6 +61,9 @@ export function PagesViewPanel({ onSelect, onEdit }: Props) {
             <span className={styles.slugText}>/{p.slug}</span>
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
+            <button className={styles.delBox} style={{ background: '#eef2f7', color: 'var(--text)' }} onClick={() => { loadPage(p.id); setMode('preview'); }}>
+              Preview
+            </button>
             <button className={styles.delBox} style={{ background: '#eef2f7', color: 'var(--text)' }} onClick={() => onEdit(p.id)}>
               Edit
             </button>

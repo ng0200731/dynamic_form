@@ -8,6 +8,7 @@ import styles from './Editor.module.css';
 interface Props {
   page: Page;
   onSave: (rows: Row[]) => Promise<void>;
+  onPreview: () => void;
 }
 
 function newField(type: FieldType): Field {
@@ -21,7 +22,7 @@ function newField(type: FieldType): Field {
   return base;
 }
 
-export function Editor({ page, onSave }: Props) {
+export function Editor({ page, onSave, onPreview }: Props) {
   const [rows, setRows] = useState<Row[]>(page.rows);
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const [linkTargets, setLinkTargets] = useState<{ id: string; name: string }[]>([]);
@@ -98,6 +99,7 @@ export function Editor({ page, onSave }: Props) {
         <button onClick={() => addRow(2)}>+ 2-Column Row</button>
         <span className={styles.spacer} />
         {savedNote && <span className={styles.saved}>Saved ✓</span>}
+        <button onClick={() => onPreview()}>Preview</button>
         <button className={styles.save} onClick={save} disabled={saving}>
           {saving ? 'Saving…' : 'Save'}
         </button>
@@ -135,7 +137,9 @@ export function Editor({ page, onSave }: Props) {
                           {f.type === 'button' && ' ▸'}
                         </button>
                       ))}
-                      <AddFieldMenu onAdd={(t) => addField(row.id, t)} />
+                      {colFields.length === 0 && (
+                        <AddFieldMenu onAdd={(t) => addField(row.id, t)} />
+                      )}
                     </div>
                   );
                 })}

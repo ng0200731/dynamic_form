@@ -67,6 +67,17 @@ db.exec(`
   );
 `);
 
+// Migration: ensure global_templates table exists on older builds.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS global_templates (
+    id       TEXT PRIMARY KEY,
+    name     TEXT UNIQUE NOT NULL,
+    type     TEXT NOT NULL,
+    options  TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL
+  );
+`);
+
 // Migration: add global_template_id column to fields if missing.
 const hasGlobalTemplateId = db
   .prepare("PRAGMA table_info(fields)")
