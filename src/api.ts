@@ -1,4 +1,4 @@
-import type { Page, PageSummary, Row, Field, OptionList } from './types';
+import type { Page, PageSummary, Row, Field, OptionList, GlobalTemplate } from './types';
 
 const BASE = '/api';
 
@@ -69,6 +69,14 @@ export const api = {
         body: JSON.stringify({ options }),
       }),
   },
+  globalTemplates: {
+    list: () => request<GlobalTemplate[]>('/global-templates'),
+    create: (name: string, type: string, options: string[]) =>
+      request<GlobalTemplate>('/global-templates', {
+        method: 'POST',
+        body: JSON.stringify({ name, type, options }),
+      }),
+  },
 };
 
 // Local id generator for unsaved editor rows/fields (replaced server-side on save).
@@ -76,4 +84,4 @@ export function localId(): string {
   return 'local-' + Math.random().toString(36).slice(2, 10);
 }
 
-export type { Page, PageSummary, Row, Field };
+export type { Page, PageSummary, Row, Field, GlobalTemplate };

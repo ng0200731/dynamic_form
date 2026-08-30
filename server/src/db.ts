@@ -37,6 +37,7 @@ db.exec(`
     placeholder         TEXT,
     options             TEXT,
     option_list_id      TEXT,
+    global_template_id  TEXT,
     position            INTEGER NOT NULL,
     link_type           TEXT,
     link_target_page_id TEXT,
@@ -56,14 +57,21 @@ db.exec(`
     FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE,
     UNIQUE (page_id, name)
   );
+
+  CREATE TABLE IF NOT EXISTS global_templates (
+    id       TEXT PRIMARY KEY,
+    name     TEXT UNIQUE NOT NULL,
+    type     TEXT NOT NULL,
+    options  TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL
+  );
 `);
 
-// Migration: builder.sqlite may already exist with the old `fields` schema.
-// CREATE TABLE IF NOT EXISTS above won't add a new column to an existing table.
-const hasOptionListId = db
+// Migration: add global_template_id column to fields if missing.
+const hasGlobalTemplateId = db
   .prepare("PRAGMA table_info(fields)")
   .all()
-  .some((col: any) => col.name === 'option_list_id');
-if (!hasOptionListId) {
-  db.exec('ALTER TABLE fields ADD COLUMN option_list_id TEXT');
+  .some((col: any) => col.name === 'global_template_id');
+if (!hasGlobalTemplateId) {
+  db.exec('ALTER TABLE fields ADD COLUMN global_template_id TEXT');
 }

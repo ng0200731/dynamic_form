@@ -28,6 +28,7 @@ export interface Field {
   placeholder?: string;
   options?: string[];
   optionListId?: string;
+  globalTemplateId?: string;
   link?: FieldLink;
 }
 
@@ -54,6 +55,15 @@ export interface Page {
   order: number;
   rows: Row[];
   optionLists: OptionList[];
+  globalTemplates: GlobalTemplate[];
+}
+
+// A reusable form-element template stored globally (not tied to a page).
+export interface GlobalTemplate {
+  id: string;
+  name: string;
+  type: FieldType;
+  options: string[];
 }
 
 export interface PageSummary {

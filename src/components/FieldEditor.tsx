@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import type { Field, LinkAction, LinkOpenIn, LinkType, OptionList } from '../types';
+import { useState, useEffect } from 'react';
+import type { Field, LinkAction, LinkOpenIn, LinkType, OptionList, GlobalTemplate } from '../types';
 import { FIELD_TYPES, OPTION_FIELD_TYPES } from '../types';
+import { api } from '../api';
 import styles from './FieldEditor.module.css';
 
 interface Props {
@@ -13,8 +14,15 @@ interface Props {
 
 export function FieldEditor({ field, linkTargets, optionLists, onChange, onDelete }: Props) {
   const [newOption, setNewOption] = useState('');
+  const [globalTemplates, setGlobalTemplates] = useState<GlobalTemplate[]>([]);
   const hasOptions = OPTION_FIELD_TYPES.includes(field.type);
   const usesList = !!field.optionListId;
+
+  useEffect(() => {
+    if (hasOptions) {
+      api.globalTemplates.list().then(setGlobalTemplates).catch(() => setGlobalTemplates([]));
+    }
+  }, [hasOptions]);
 
   const update = (patch: Partial<Field>) => onChange({ ...field, ...patch });
 
@@ -33,6 +41,8 @@ export function FieldEditor({ field, linkTargets, optionLists, onChange, onDelet
     const link = { ...(field.link ?? { type: 'page' as LinkType }), ...patch };
     update({ link });
   };
+
+  const selectedGlobal = globalTemplates.find((t) => t.id === field.globalTemplateId);
 
   return (
     <div className={styles.panel}>
@@ -76,25 +86,49 @@ export function FieldEditor({ field, linkTargets, optionLists, onChange, onDelet
               <label className={styles.field}>
                 <span>Option source</span>
                 <select
-                  value={field.optionListId ?? ''}
+                  value={field.optionListId ?? field.globalTemplateId ?? ''}
                   onChange={(e) => {
-                    const listId = e.target.value || undefined;
-                    update({
-                      optionListId: listId,
-                      options: listId ? undefined : field.options ?? ['Option 1'],
-                    });
+                    const val = e.target.value;
+                    if (val.startsWith('global:')) {
+                      update({
+                        globalTemplateId: val.slice('global:'.length),
+                        optionListId: undefined,
+                        options: undefined,
+                      });
+                    } else {
+                      update({
+                        optionListId: val || undefined,
+                        globalTemplateId: undefined,
+                        options: val ? undefined : field.options ?? ['Option 1'],
+                      });
+                    }
                   }}
                 >
                   <option value="">Inline (type below)</option>
-                  {optionLists.map((l) => (
-                    <option key={l.id} value={l.id}>
-                      {l.name}
-                    </option>
-                  ))}
+                  <optgroup label="Global templates">
+                    {globalTemplates
+                      .filter((t) => t.type === field.type)
+                      .map((t) => (
+                        <option key={t.id} value={`global:${t.id}`}>
+                          {t.name}
+                        </option>
+                      ))}
+                  </optgroup>
+                  <optgroup label="Page lists">
+                    {optionLists.map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {l.name}
+                      </option>
+                    ))}
+                  </optgroup>
                 </select>
               </label>
 
-              {usesList ? (
+              {field.globalTemplateId && selectedGlobal ? (
+                <p className={styles.hint}>
+                  Using global template <strong>{selectedGlobal.name}</strong> ({selectedGlobal.type}).
+                </p>
+              ) : usesList ? (
                 <p className={styles.hint}>Managed in the Lists tab.</p>
               ) : (
                 <>

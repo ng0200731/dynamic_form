@@ -28,6 +28,7 @@ export interface Field {
   placeholder?: string;
   options?: string[];
   optionListId?: string;
+  globalTemplateId?: string;
   link?: FieldLink;
 }
 
@@ -54,9 +55,20 @@ export interface Page {
   order: number;
   rows: Row[];
   optionLists: OptionList[];
+  globalTemplates: GlobalTemplate[];
 }
 
 // Lightweight page summary used for the navigation tree.
+// A reusable form-element template stored globally (not tied to a page).
+// Created via the "Global" sidebar action. Fields of matching type can later
+// reference these as preset form elements.
+export interface GlobalTemplate {
+  id: string;
+  name: string;
+  type: FieldType;
+  options: string[];
+}
+
 export interface PageSummary {
   id: string;
   name: string;

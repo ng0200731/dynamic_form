@@ -71,6 +71,9 @@ export function Preview({ page, onNavigate, onBack }: Props) {
   };
 
   const optionsFor = (f: Field): string[] => {
+    if (f.globalTemplateId) {
+      return page.globalTemplates?.find((t) => t.id === f.globalTemplateId)?.options ?? [];
+    }
     if (f.optionListId) {
       return page.optionLists?.find((l) => l.id === f.optionListId)?.options ?? [];
     }

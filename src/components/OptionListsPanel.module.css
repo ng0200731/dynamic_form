@@ -193,3 +193,51 @@
   padding: 6px 14px;
   cursor: pointer;
 }
+
+.tag {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(47, 109, 246, 0.1);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.boxName {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.boxHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.optValPlain {
+  padding: 3px 0;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.optEmpty {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.cancel {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+}

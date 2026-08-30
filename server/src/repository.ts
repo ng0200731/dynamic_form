@@ -6,6 +6,7 @@ import type {
   Row,
   Field,
   OptionList,
+  GlobalTemplate,
   LinkAction,
   LinkOpenIn,
 } from './types.js';
@@ -34,6 +35,7 @@ interface FieldRow {
   placeholder: string | null;
   options: string | null;
   option_list_id: string | null;
+  global_template_id: string | null;
   position: number;
   link_type: string | null;
   link_target_page_id: string | null;
@@ -42,12 +44,29 @@ interface FieldRow {
   link_open_in: string | null;
 }
 
+interface GlobalTemplateRow {
+  id: string;
+  name: string;
+  type: string;
+  options: string;
+  created_at: string;
+}
+
 interface OptionListRow {
   id: string;
   page_id: string;
   name: string;
   position: number;
   options: string;
+}
+
+function mapGlobalTemplate(r: GlobalTemplateRow): GlobalTemplate {
+  return {
+    id: r.id,
+    name: r.name,
+    type: r.type as Field['type'],
+    options: r.options ? (JSON.parse(r.options) as string[]) : [],
+  };
 }
 
 function mapPage(r: PageRow): PageSummary {
@@ -78,6 +97,7 @@ function mapField(r: FieldRow): Field {
     placeholder: r.placeholder ?? undefined,
     options: r.options ? (JSON.parse(r.options) as string[]) : undefined,
     optionListId: r.option_list_id ?? undefined,
+    globalTemplateId: r.global_template_id ?? undefined,
     link: r.link_type
       ? {
           type: r.link_type as 'page' | 'url' | 'action',
@@ -91,6 +111,28 @@ function mapField(r: FieldRow): Field {
 }
 
 export const repository = {
+  createGlobalTemplate(name: string, type: Field['type'], options: string[]): GlobalTemplate {
+    const nameExists = db.prepare('SELECT 1 FROM global_templates WHERE name = ?').get(name);
+    if (nameExists) {
+      const err = new Error('NAME_TAKEN') as Error & { code?: string };
+      err.code = 'NAME_TAKEN';
+      throw err;
+    }
+    const id = generateId();
+    const now = new Date().toISOString();
+    db.prepare(
+      'INSERT INTO global_templates (id, name, type, options, created_at) VALUES (?, ?, ?, ?, ?)',
+    ).run(id, name, type, JSON.stringify(options), now);
+    return { id, name, type, options };
+  },
+
+  listGlobalTemplates(): GlobalTemplate[] {
+    const rows = db
+      .prepare('SELECT id, name, type, options, created_at FROM global_templates ORDER BY created_at')
+      .all() as GlobalTemplateRow[];
+    return rows.map(mapGlobalTemplate);
+  },
+
   listPages(): PageSummary[] {
     const rows = db
       .prepare('SELECT id, name, slug, parent_id, "order" FROM pages ORDER BY "order", created_at')
@@ -109,7 +151,7 @@ export const repository = {
       .all(id) as RowRow[];
 
     const fieldStmt = db.prepare(
-      'SELECT id, row_id, type, label, required, placeholder, options, option_list_id, position, link_type, link_target_page_id, link_url, link_action, link_open_in FROM fields WHERE row_id = ? ORDER BY position',
+      'SELECT id, row_id, type, label, required, placeholder, options, option_list_id, global_template_id, position, link_type, link_target_page_id, link_url, link_action, link_open_in FROM fields WHERE row_id = ? ORDER BY position',
     );
 
     const rows: Row[] = rowRows.map((rr) => {
@@ -126,7 +168,7 @@ export const repository = {
       .all(id) as OptionListRow[];
     const optionLists = listRows.map(mapOptionList);
 
-    return { ...mapPage(page), rows, optionLists };
+    return { ...mapPage(page), rows, optionLists, globalTemplates: [] };
   },
 
   getOptionLists(pageId: string): OptionList[] {
@@ -313,8 +355,8 @@ export const repository = {
           'INSERT INTO rows (id, page_id, columns, position) VALUES (?, ?, ?, ?)',
         );
         const insField = db.prepare(
-          `INSERT INTO fields (id, row_id, type, label, required, placeholder, options, option_list_id, position, link_type, link_target_page_id, link_url, link_action, link_open_in)
-           VALUES (@id, @row_id, @type, @label, @required, @placeholder, @options, @option_list_id, @position, @link_type, @link_target_page_id, @link_url, @link_action, @link_open_in)`,
+          `INSERT INTO fields (id, row_id, type, label, required, placeholder, options, option_list_id, global_template_id, position, link_type, link_target_page_id, link_url, link_action, link_open_in)
+           VALUES (@id, @row_id, @type, @label, @required, @placeholder, @options, @option_list_id, @global_template_id, @position, @link_type, @link_target_page_id, @link_url, @link_action, @link_open_in)`,
         );
 
         patch.rows.forEach((row, ri) => {
@@ -331,6 +373,7 @@ export const repository = {
               placeholder: f.placeholder ?? null,
               options: f.options ? JSON.stringify(f.options) : null,
               option_list_id: f.optionListId ?? null,
+              global_template_id: f.globalTemplateId ?? null,
               position: fi,
               link_type: f.link?.type ?? null,
               link_target_page_id: f.link?.targetPageId ?? null,

@@ -46,12 +46,6 @@ export function Toolbar({ page, pages, mode, onModeChange, onReparent }: Props) 
             Edit
           </button>
           <button
-            className={mode === 'lists' ? styles.active : ''}
-            onClick={() => onModeChange('lists')}
-          >
-            Lists
-          </button>
-          <button
             className={mode === 'preview' ? styles.active : ''}
             onClick={() => onModeChange('preview')}
           >

@@ -4,7 +4,7 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { repository } from './repository.js';
-import type { Row } from './types.js';
+import type { Row, Field } from './types.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -71,6 +71,31 @@ api.delete('/pages/:id', (req, res) => {
 
 api.get('/pages/:id/link-targets', (req, res) => {
   res.json(repository.linkTargets(req.params.id));
+});
+
+// ---- Global form-element templates ----------------------------------------
+
+api.get('/global-templates', (_req, res) => {
+  res.json(repository.listGlobalTemplates());
+});
+
+api.post('/global-templates', (req, res) => {
+  const name = String(req.body?.name ?? '').trim();
+  const type = String(req.body?.type ?? '');
+  const options = Array.isArray(req.body?.options) ? (req.body.options as string[]) : [];
+  if (!name) return res.status(400).json({ error: 'Name is required' });
+  if (!['input', 'textarea', 'dropdown', 'radio', 'image', 'button'].includes(type)) {
+    return res.status(400).json({ error: 'Invalid field type' });
+  }
+  try {
+    const tpl = repository.createGlobalTemplate(name, type as Field['type'], options);
+    res.status(201).json(tpl);
+  } catch (e) {
+    if ((e as { code?: string }).code === 'NAME_TAKEN') {
+      return res.status(409).json({ error: 'A template with that name already exists' });
+    }
+    throw e;
+  }
 });
 
 // ---- Per-page option lists -------------------------------------------------
