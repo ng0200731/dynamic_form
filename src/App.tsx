@@ -27,6 +27,10 @@ export function App() {
     setCameFromPages,
   } = usePages();
 
+  // Bumped whenever a global template is created, to force GlobalViewPanel to
+  // remount and reload even if mode is already 'global'.
+  const [globalReloadNonce, setGlobalReloadNonce] = useState(0);
+
   // Track previous page id for the "Go Back" button action in preview.
   const [previousId, setPreviousId] = useState<string | null>(null);
   // Where the current preview was launched from: 'pages' or 'edit'.
@@ -79,6 +83,7 @@ export function App() {
         onCreate={createPage}
         mode={mode}
         onModeChange={setMode}
+        onGlobalSaved={() => setGlobalReloadNonce((n) => n + 1)}
       />
       <main className={styles.main}>
         {loading && <div className={styles.status}>Loading…</div>}
@@ -119,7 +124,7 @@ export function App() {
               ) : mode === 'lists' ? (
                 <OptionListsPanel page={currentPage} onChanged={loadPage} />
               ) : mode === 'global' ? (
-                <GlobalViewPanel />
+                <GlobalViewPanel key={globalReloadNonce} />
               ) : mode === 'pages' ? (
                 <PagesViewPanel
                   onSelect={handleSelect}

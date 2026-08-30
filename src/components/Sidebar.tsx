@@ -9,9 +9,10 @@ interface Props {
   onCreate: (name: string, parentId: string | null) => Promise<{ id: string }>;
   mode: 'edit' | 'lists' | 'preview' | 'global' | 'pages';
   onModeChange: (m: 'edit' | 'lists' | 'preview' | 'global' | 'pages') => void;
+  onGlobalSaved?: () => void;
 }
 
-export function Sidebar({ pages, onCreate, mode, onModeChange }: Props) {
+export function Sidebar({ pages, onCreate, mode, onModeChange, onGlobalSaved }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [globalOpen, setGlobalOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(true);
@@ -70,7 +71,13 @@ export function Sidebar({ pages, onCreate, mode, onModeChange }: Props) {
         />
       )}
       {globalOpen && (
-        <GlobalTemplateDialog onClose={() => setGlobalOpen(false)} onSaved={() => onModeChange('global')} />
+        <GlobalTemplateDialog
+          onClose={() => setGlobalOpen(false)}
+          onSaved={() => {
+            onGlobalSaved?.();
+            onModeChange('global');
+          }}
+        />
       )}
     </aside>
   );
