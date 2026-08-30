@@ -8,9 +8,10 @@ interface Props {
   onEdit: (id: string) => void;
   loadPage: (id: string) => void;
   setMode: (m: 'edit' | 'lists' | 'preview' | 'global' | 'pages') => void;
+  setCameFromPages: (v: boolean) => void;
 }
 
-export function PagesViewPanel({ onSelect, onEdit, loadPage, setMode }: Props) {
+export function PagesViewPanel({ onSelect, onEdit, loadPage, setMode, setCameFromPages }: Props) {
   const [pages, setPages] = useState<PageSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -61,7 +62,7 @@ export function PagesViewPanel({ onSelect, onEdit, loadPage, setMode }: Props) {
             <span className={styles.slugText}>/{p.slug}</span>
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
-            <button className={styles.delBox} style={{ background: '#eef2f7', color: 'var(--text)' }} onClick={() => { loadPage(p.id); setMode('preview'); }}>
+            <button className={styles.delBox} style={{ background: '#eef2f7', color: 'var(--text)' }} onClick={() => { setCameFromPages(true); loadPage(p.id); setMode('preview'); }}>
               Preview
             </button>
             <button className={styles.delBox} style={{ background: '#eef2f7', color: 'var(--text)' }} onClick={() => onEdit(p.id)}>

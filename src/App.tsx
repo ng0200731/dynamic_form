@@ -43,11 +43,30 @@ export function App() {
   );
 
   const goBack = useCallback(() => {
+    if (cameFromPages) {
+      setCameFromPages(false);
+      setMode('pages');
+      return;
+    }
     if (previousId) {
       setPreviousId(null);
       loadPage(previousId);
     }
-  }, [loadPage, previousId]);
+  }, [loadPage, previousId, cameFromPages, setCameFromPages, setMode]);
+
+  const previewBack = useCallback(() => {
+    if (cameFromPages) {
+      setCameFromPages(false);
+      setMode('pages');
+      return;
+    }
+    if (previousId) {
+      setPreviousId(null);
+      loadPage(previousId);
+    } else {
+      setMode('edit');
+    }
+  }, [loadPage, previousId, cameFromPages, setCameFromPages, setMode]);
 
   const handleSelect = useCallback(
     (id: string) => {
@@ -103,14 +122,20 @@ export function App() {
                   onSelect={handleSelect}
                   onEdit={(id) => {
                     loadPage(id);
-                    setCameFromPages(true);
+                    setCameFromPages(false);
                     setMode('edit');
                   }}
                   loadPage={loadPage}
                   setMode={setMode}
+                  setCameFromPages={setCameFromPages}
                 />
               ) : (
-                <Preview page={currentPage} onNavigate={navigate} onBack={goBack} />
+                <Preview
+                  page={currentPage}
+                  onNavigate={navigate}
+                  onBack={previewBack}
+                  showBack
+                />
               )}
             </div>
           </>

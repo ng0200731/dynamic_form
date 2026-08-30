@@ -6,13 +6,14 @@ interface Props {
   page: Page;
   onNavigate: (pageId: string, openIn: 'same' | 'new') => void;
   onBack: () => void;
+  showBack?: boolean;
 }
 
 interface Values {
   [fieldId: string]: string;
 }
 
-export function Preview({ page, onNavigate, onBack }: Props) {
+export function Preview({ page, onNavigate, onBack, showBack }: Props) {
   const [values, setValues] = useState<Values>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [message, setMessage] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
@@ -180,7 +181,14 @@ export function Preview({ page, onNavigate, onBack }: Props) {
 
   return (
     <div className={styles.preview}>
-      <h1 className={styles.title}>{page.name}</h1>
+      <div className={styles.head}>
+        {showBack && (
+          <button type="button" className={styles.back} onClick={onBack} title="Back">
+            ‹ Back
+          </button>
+        )}
+        <h1 className={styles.title}>{page.name}</h1>
+      </div>
       {allFields.length === 0 && <p className={styles.empty}>This page has no fields yet.</p>}
       <div className={styles.form}>
         {page.rows.map((row) => (
