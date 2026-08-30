@@ -89,7 +89,14 @@ export function App() {
               ) : mode === 'global' ? (
                 <GlobalViewPanel />
               ) : mode === 'pages' ? (
-                <PagesViewPanel selectedId={selectedId} onSelect={handleSelect} onEdit={loadPage} />
+                <PagesViewPanel
+                  selectedId={selectedId}
+                  onSelect={handleSelect}
+                  onEdit={(id) => {
+                    loadPage(id);
+                    setMode('edit');
+                  }}
+                />
               ) : (
                 <Preview page={currentPage} onNavigate={navigate} onBack={goBack} />
               )}
