@@ -9,9 +9,11 @@ interface Props {
   selectedId: string | null;
   onSelect: (id: string) => void;
   onCreate: (name: string, parentId: string | null) => Promise<{ id: string }>;
+  mode: 'edit' | 'lists' | 'preview';
+  onModeChange: (m: 'edit' | 'lists' | 'preview') => void;
 }
 
-export function Sidebar({ pages, selectedId, onSelect, onCreate }: Props) {
+export function Sidebar({ pages, selectedId, onSelect, onCreate, mode, onModeChange }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [treeVisible, setTreeVisible] = useState(true);
@@ -45,6 +47,12 @@ export function Sidebar({ pages, selectedId, onSelect, onCreate }: Props) {
                 onClick={() => setTreeVisible((v) => !v)}
               >
                 View page {treeVisible ? '(hide)' : '(show)'}
+              </button>
+              <button
+                className={mode === 'lists' ? `${styles.subItem} ${styles.subActive}` : styles.subItem}
+                onClick={() => onModeChange('lists')}
+              >
+                Global
               </button>
             </div>
           )}

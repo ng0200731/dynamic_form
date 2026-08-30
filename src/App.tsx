@@ -60,6 +60,8 @@ export function App() {
         selectedId={selectedId}
         onSelect={handleSelect}
         onCreate={createPage}
+        mode={mode}
+        onModeChange={setMode}
       />
       <main className={styles.main}>
         {loading && <div className={styles.status}>Loading…</div>}

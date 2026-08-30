@@ -64,6 +64,7 @@ export function usePages() {
       const created = await api.createPage(name, parentId);
       await refreshList();
       await loadPage(created.id);
+      setMode('edit');
       return created;
     },
     [refreshList, loadPage],

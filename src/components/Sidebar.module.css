@@ -88,3 +88,12 @@
 .subItem:hover {
   background: #eef2f7;
 }
+
+.subActive {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.subActive:hover {
+  background: #eef2f7;
+}
