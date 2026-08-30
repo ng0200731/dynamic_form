@@ -127,29 +127,63 @@
   color: var(--muted);
 }
 
-.menu {
-  position: absolute;
-  bottom: 34px;
-  left: 0;
-  right: 0;
+.menuOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 90;
+}
+
+.menuDialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 280px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+  padding: 16px;
+}
+
+.menuTitle {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.menuGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.menuGrid button {
+  background: #eef2f7;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.menuGrid button:hover {
+  background: #e2e8f0;
+  border-color: var(--accent);
+}
+
+.menuCancel {
+  width: 100%;
+  margin-top: 12px;
   background: #fff;
   border: 1px solid var(--border);
   border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-}
-
-.menu button {
-  background: #fff;
-  border: none;
-  text-align: left;
-  padding: 8px 10px;
-}
-
-.menu button:hover {
-  background: #eef2f7;
+  padding: 8px;
+  color: var(--muted);
+  cursor: pointer;
 }
 
 .sidePanel {

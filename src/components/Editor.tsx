@@ -168,19 +168,28 @@ function AddFieldMenu({ onAdd }: { onAdd: (t: FieldType) => void }) {
         + Add Field
       </button>
       {open && (
-        <div className={styles.menu}>
-          {FIELD_TYPES.map((t) => (
-            <button
-              key={t.value}
-              onClick={() => {
-                onAdd(t.value);
-                setOpen(false);
-              }}
-            >
-              {t.label}
+        <>
+          <div className={styles.menuOverlay} onClick={() => setOpen(false)} />
+          <div className={styles.menuDialog}>
+            <h3 className={styles.menuTitle}>Add Field</h3>
+            <div className={styles.menuGrid}>
+              {FIELD_TYPES.map((t) => (
+                <button
+                  key={t.value}
+                  onClick={() => {
+                    onAdd(t.value);
+                    setOpen(false);
+                  }}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            <button className={styles.menuCancel} onClick={() => setOpen(false)}>
+              Cancel
             </button>
-          ))}
-        </div>
+          </div>
+        </>
       )}
     </div>
   );
