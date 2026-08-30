@@ -9,6 +9,8 @@ interface Props {
   page: Page;
   onSave: (rows: Row[]) => Promise<void>;
   onPreview: () => void;
+  onBack?: () => void;
+  showBack?: boolean;
 }
 
 function newField(type: FieldType): Field {
@@ -22,7 +24,7 @@ function newField(type: FieldType): Field {
   return base;
 }
 
-export function Editor({ page, onSave, onPreview }: Props) {
+export function Editor({ page, onSave, onPreview, onBack, showBack }: Props) {
   const [rows, setRows] = useState<Row[]>(page.rows);
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const [linkTargets, setLinkTargets] = useState<{ id: string; name: string }[]>([]);
@@ -95,6 +97,13 @@ export function Editor({ page, onSave, onPreview }: Props) {
   return (
     <div className={styles.editor}>
       <div className={styles.toolbar}>
+        <div className={styles.left}>
+          {showBack && (
+            <button className={styles.back} onClick={onBack} title="Back">
+              ‹ Back
+            </button>
+          )}
+        </div>
         <button onClick={() => addRow(1)}>+ 1-Column Row</button>
         <button onClick={() => addRow(2)}>+ 2-Column Row</button>
         <span className={styles.spacer} />

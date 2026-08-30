@@ -13,11 +13,22 @@
   margin-bottom: 12px;
 }
 
+.toolbar .left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .toolbar button {
   background: #fff;
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 6px 10px;
+}
+
+.toolbar .back {
+  color: var(--text);
+  cursor: pointer;
 }
 
 .toolbar .save {

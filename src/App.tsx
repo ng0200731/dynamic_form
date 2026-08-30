@@ -29,6 +29,8 @@ export function App() {
 
   // Track previous page id for the "Go Back" button action in preview.
   const [previousId, setPreviousId] = useState<string | null>(null);
+  // Where the current preview was launched from: 'pages' or 'edit'.
+  const [previewOrigin, setPreviewOrigin] = useState<'pages' | 'edit' | null>(null);
 
   const navigate = useCallback(
     (pageId: string, openIn: 'same' | 'new') => {
@@ -42,22 +44,16 @@ export function App() {
     [loadPage, selectedId],
   );
 
-  const goBack = useCallback(() => {
-    if (cameFromPages) {
+  const previewBack = useCallback(() => {
+    if (previewOrigin === 'pages') {
+      setPreviewOrigin(null);
       setCameFromPages(false);
       setMode('pages');
       return;
     }
-    if (previousId) {
-      setPreviousId(null);
-      loadPage(previousId);
-    }
-  }, [loadPage, previousId, cameFromPages, setCameFromPages, setMode]);
-
-  const previewBack = useCallback(() => {
-    if (cameFromPages) {
-      setCameFromPages(false);
-      setMode('pages');
+    if (previewOrigin === 'edit') {
+      setPreviewOrigin(null);
+      setMode('edit');
       return;
     }
     if (previousId) {
@@ -66,7 +62,7 @@ export function App() {
     } else {
       setMode('edit');
     }
-  }, [loadPage, previousId, cameFromPages, setCameFromPages, setMode]);
+  }, [loadPage, previousId, previewOrigin, cameFromPages, setCameFromPages, setMode]);
 
   const handleSelect = useCallback(
     (id: string) => {
@@ -98,11 +94,6 @@ export function App() {
             <Toolbar
               page={currentPage}
               pages={pages}
-              mode={mode}
-              onModeChange={(m) => {
-                if (m !== 'edit' && m !== 'preview') setCameFromPages(false);
-                setMode(m);
-              }}
               onReparent={reparent}
               showBack={cameFromPages}
               onBack={() => {
@@ -112,7 +103,19 @@ export function App() {
             />
             <div className={styles.content}>
               {mode === 'edit' ? (
-                <Editor page={currentPage} onSave={saveCurrent} onPreview={() => setMode('preview')} />
+                <Editor
+                  page={currentPage}
+                  onSave={saveCurrent}
+                  onPreview={() => {
+                    setPreviewOrigin('edit');
+                    setMode('preview');
+                  }}
+                  onBack={() => {
+                    setCameFromPages(false);
+                    setMode('pages');
+                  }}
+                  showBack={cameFromPages}
+                />
               ) : mode === 'lists' ? (
                 <OptionListsPanel page={currentPage} onChanged={loadPage} />
               ) : mode === 'global' ? (
@@ -122,12 +125,13 @@ export function App() {
                   onSelect={handleSelect}
                   onEdit={(id) => {
                     loadPage(id);
-                    setCameFromPages(false);
+                    setCameFromPages(true);
                     setMode('edit');
                   }}
                   loadPage={loadPage}
                   setMode={setMode}
                   setCameFromPages={setCameFromPages}
+                  setPreviewOrigin={setPreviewOrigin}
                 />
               ) : (
                 <Preview
