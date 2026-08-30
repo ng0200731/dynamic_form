@@ -114,7 +114,7 @@ export function App() {
                     setCameFromPages(false);
                     setMode('pages');
                   }}
-                  showBack={cameFromPages}
+                  showBack={previewOrigin === 'edit'}
                 />
               ) : mode === 'lists' ? (
                 <OptionListsPanel page={currentPage} onChanged={loadPage} />
@@ -138,7 +138,7 @@ export function App() {
                   page={currentPage}
                   onNavigate={navigate}
                   onBack={previewBack}
-                  showBack
+                  showBack={previewOrigin === 'edit'}
                 />
               )}
             </div>
