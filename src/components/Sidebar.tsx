@@ -3,7 +3,6 @@ import type { PageSummary } from '../types';
 import { PageTree } from './PageTree';
 import { CreatePageDialog } from './CreatePageDialog';
 import { GlobalTemplateDialog } from './GlobalTemplateDialog';
-import { GlobalViewDialog } from './GlobalViewDialog';
 import styles from './Sidebar.module.css';
 
 interface Props {
@@ -11,12 +10,13 @@ interface Props {
   selectedId: string | null;
   onSelect: (id: string) => void;
   onCreate: (name: string, parentId: string | null) => Promise<{ id: string }>;
+  mode: 'edit' | 'lists' | 'preview' | 'global';
+  onModeChange: (m: 'edit' | 'lists' | 'preview' | 'global') => void;
 }
 
-export function Sidebar({ pages, selectedId, onSelect, onCreate }: Props) {
+export function Sidebar({ pages, selectedId, onSelect, onCreate, mode, onModeChange }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [globalOpen, setGlobalOpen] = useState(false);
-  const [globalViewOpen, setGlobalViewOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [treeVisible, setTreeVisible] = useState(true);
 
@@ -57,8 +57,8 @@ export function Sidebar({ pages, selectedId, onSelect, onCreate }: Props) {
                 Global — Create
               </button>
               <button
-                className={styles.subItem}
-                onClick={() => setGlobalViewOpen(true)}
+                className={mode === 'global' ? `${styles.subItem} ${styles.subActive}` : styles.subItem}
+                onClick={() => onModeChange('global')}
               >
                 Global — View
               </button>
@@ -79,9 +79,6 @@ export function Sidebar({ pages, selectedId, onSelect, onCreate }: Props) {
       )}
       {globalOpen && (
         <GlobalTemplateDialog onClose={() => setGlobalOpen(false)} />
-      )}
-      {globalViewOpen && (
-        <GlobalViewDialog onClose={() => setGlobalViewOpen(false)} />
       )}
     </aside>
   );

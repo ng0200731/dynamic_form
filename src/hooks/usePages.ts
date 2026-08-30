@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api';
 import type { Page, PageSummary } from '../types';
 
-export type Mode = 'edit' | 'lists' | 'preview';
+export type Mode = 'edit' | 'lists' | 'preview' | 'global';
 
 export function usePages() {
   const [pages, setPages] = useState<PageSummary[]>([]);

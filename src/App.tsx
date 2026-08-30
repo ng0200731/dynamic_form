@@ -5,6 +5,7 @@ import { Toolbar } from './components/Toolbar';
 import { Editor } from './components/Editor';
 import { Preview } from './components/Preview';
 import { OptionListsPanel } from './components/OptionListsPanel';
+import { GlobalViewPanel } from './components/GlobalViewPanel';
 import styles from './App.module.css';
 
 export function App() {
@@ -60,6 +61,8 @@ export function App() {
         selectedId={selectedId}
         onSelect={handleSelect}
         onCreate={createPage}
+        mode={mode}
+        onModeChange={setMode}
       />
       <main className={styles.main}>
         {loading && <div className={styles.status}>Loading…</div>}
@@ -84,6 +87,8 @@ export function App() {
                 <Editor page={currentPage} onSave={saveCurrent} />
               ) : mode === 'lists' ? (
                 <OptionListsPanel page={currentPage} onChanged={loadPage} />
+              ) : mode === 'global' ? (
+                <GlobalViewPanel />
               ) : (
                 <Preview page={currentPage} onNavigate={navigate} onBack={goBack} />
               )}

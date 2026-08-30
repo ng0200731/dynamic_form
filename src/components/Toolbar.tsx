@@ -45,12 +45,18 @@ export function Toolbar({ page, pages, mode, onModeChange, onReparent }: Props) 
           >
             Edit
           </button>
-          <button
-            className={mode === 'preview' ? styles.active : ''}
-            onClick={() => onModeChange('preview')}
-          >
-            Preview
-          </button>
+          {mode === 'global' ? (
+            <button className={styles.active} disabled>
+              Global
+            </button>
+          ) : (
+            <button
+              className={mode === 'preview' ? styles.active : ''}
+              onClick={() => onModeChange('preview')}
+            >
+              Preview
+            </button>
+          )}
         </div>
       </div>
     </div>
