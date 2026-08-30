@@ -38,25 +38,25 @@ export function Sidebar({ pages, onCreate, mode, onModeChange }: Props) {
           {settingsOpen && (
             <div className={styles.submenu}>
               <button className={styles.subItem} onClick={() => setDialogOpen(true)}>
-                Create page
-              </button>
-              <button
-                className={styles.subItem}
-                onClick={() => setGlobalOpen(true)}
-              >
-                Global — Create
-              </button>
-              <button
-                className={mode === 'global' ? `${styles.subItem} ${styles.subActive}` : styles.subItem}
-                onClick={() => onModeChange('global')}
-              >
-                Global — View
+                Page Create
               </button>
               <button
                 className={mode === 'pages' ? `${styles.subItem} ${styles.subActive}` : styles.subItem}
                 onClick={() => onModeChange('pages')}
               >
-                View Pages
+                Page View
+              </button>
+              <button
+                className={styles.subItem}
+                onClick={() => setGlobalOpen(true)}
+              >
+                Global Create
+              </button>
+              <button
+                className={mode === 'global' ? `${styles.subItem} ${styles.subActive}` : styles.subItem}
+                onClick={() => onModeChange('global')}
+              >
+                Global View
               </button>
             </div>
           )}

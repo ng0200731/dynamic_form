@@ -98,6 +98,29 @@ api.post('/global-templates', (req, res) => {
   }
 });
 
+api.put('/global-templates/:id', (req, res) => {
+  const { name, options } = req.body ?? {};
+  try {
+    const tpl = repository.updateGlobalTemplate(req.params.id, {
+      name: name !== undefined ? String(name).trim() : undefined,
+      options: Array.isArray(options) ? (options as string[]) : undefined,
+    });
+    res.json(tpl);
+  } catch (e) {
+    const code = (e as { code?: string }).code;
+    if (code === 'NOT_FOUND') return res.status(404).json({ error: 'Template not found' });
+    if (code === 'NAME_TAKEN') {
+      return res.status(409).json({ error: 'A template with that name already exists' });
+    }
+    throw e;
+  }
+});
+
+api.delete('/global-templates/:id', (req, res) => {
+  repository.deleteGlobalTemplate(req.params.id);
+  res.status(204).end();
+});
+
 // ---- Per-page option lists -------------------------------------------------
 
 api.get('/pages/:id/option-lists', (req, res) => {

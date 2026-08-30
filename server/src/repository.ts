@@ -133,6 +133,52 @@ export const repository = {
     return rows.map(mapGlobalTemplate);
   },
 
+  updateGlobalTemplate(
+    id: string,
+    patch: { name?: string; options?: string[] },
+  ): GlobalTemplate {
+    const existing = db.prepare('SELECT 1 FROM global_templates WHERE id = ?').get(id);
+    if (!existing) {
+      const err = new Error('NOT_FOUND') as Error & { code?: string };
+      err.code = 'NOT_FOUND';
+      throw err;
+    }
+    if (patch.name !== undefined) {
+      const clash = db
+        .prepare('SELECT 1 FROM global_templates WHERE name = ? AND id != ?')
+        .get(patch.name, id);
+      if (clash) {
+        const err = new Error('NAME_TAKEN') as Error & { code?: string };
+        err.code = 'NAME_TAKEN';
+        throw err;
+      }
+    }
+    db.exec('BEGIN');
+    try {
+      if (patch.name !== undefined) {
+        db.prepare('UPDATE global_templates SET name = ? WHERE id = ?').run(patch.name, id);
+      }
+      if (patch.options !== undefined) {
+        db.prepare('UPDATE global_templates SET options = ? WHERE id = ?').run(
+          JSON.stringify(patch.options),
+          id,
+        );
+      }
+      db.exec('COMMIT');
+    } catch (e) {
+      db.exec('ROLLBACK');
+      throw e;
+    }
+    const row = db
+      .prepare('SELECT id, name, type, options, created_at FROM global_templates WHERE id = ?')
+      .get(id) as GlobalTemplateRow;
+    return mapGlobalTemplate(row);
+  },
+
+  deleteGlobalTemplate(id: string): void {
+    db.prepare('DELETE FROM global_templates WHERE id = ?').run(id);
+  },
+
   listPages(): PageSummary[] {
     const rows = db
       .prepare('SELECT id, name, slug, parent_id, "order" FROM pages ORDER BY "order", created_at')

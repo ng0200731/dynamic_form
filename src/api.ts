@@ -76,6 +76,12 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ name, type, options }),
       }),
+    update: (id: string, patch: { name?: string; options?: string[] }) =>
+      request<GlobalTemplate>(`/global-templates/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(patch),
+      }),
+    remove: (id: string) => request<void>(`/global-templates/${id}`, { method: 'DELETE' }),
   },
 };
 
