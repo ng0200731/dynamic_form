@@ -168,7 +168,12 @@ export const repository = {
       .all(id) as OptionListRow[];
     const optionLists = listRows.map(mapOptionList);
 
-    return { ...mapPage(page), rows, optionLists, globalTemplates: [] };
+    const templateRows = db
+      .prepare('SELECT id, name, type, options, created_at FROM global_templates ORDER BY created_at')
+      .all() as GlobalTemplateRow[];
+    const globalTemplates = templateRows.map(mapGlobalTemplate);
+
+    return { ...mapPage(page), rows, optionLists, globalTemplates };
   },
 
   getOptionLists(pageId: string): OptionList[] {
