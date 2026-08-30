@@ -23,6 +23,8 @@ export function App() {
     reparent,
     createPage,
     removePage,
+    cameFromPages,
+    setCameFromPages,
   } = usePages();
 
   // Track previous page id for the "Go Back" button action in preview.
@@ -78,8 +80,16 @@ export function App() {
               page={currentPage}
               pages={pages}
               mode={mode}
-              onModeChange={setMode}
+              onModeChange={(m) => {
+                if (m !== 'edit' && m !== 'preview') setCameFromPages(false);
+                setMode(m);
+              }}
               onReparent={reparent}
+              showBack={cameFromPages}
+              onBack={() => {
+                setCameFromPages(false);
+                setMode('pages');
+              }}
             />
             <div className={styles.content}>
               {mode === 'edit' ? (
@@ -94,6 +104,7 @@ export function App() {
                   onSelect={handleSelect}
                   onEdit={(id) => {
                     loadPage(id);
+                    setCameFromPages(true);
                     setMode('edit');
                   }}
                 />

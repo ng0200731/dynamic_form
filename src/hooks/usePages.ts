@@ -9,6 +9,7 @@ export function usePages() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState<Page | null>(null);
   const [mode, setMode] = useState<Mode>('edit');
+  const [cameFromPages, setCameFromPages] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -91,6 +92,8 @@ export function usePages() {
     currentPage,
     mode,
     setMode,
+    cameFromPages,
+    setCameFromPages,
     loading,
     error,
     refreshList,

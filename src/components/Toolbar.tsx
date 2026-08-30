@@ -8,12 +8,19 @@ interface Props {
   mode: Mode;
   onModeChange: (m: Mode) => void;
   onReparent: (parentId: string | null) => void;
+  showBack?: boolean;
+  onBack?: () => void;
 }
 
-export function Toolbar({ page, pages, mode, onModeChange, onReparent }: Props) {
+export function Toolbar({ page, pages, mode, onModeChange, onReparent, showBack, onBack }: Props) {
   return (
     <div className={styles.toolbar}>
       <div className={styles.left}>
+        {showBack && (
+          <button className={styles.back} onClick={onBack} title="Back to Page View">
+            ‹ Back
+          </button>
+        )}
         <span className={styles.name}>{page.name}</span>
         <span className={styles.slug}>/{page.slug}</span>
       </div>
