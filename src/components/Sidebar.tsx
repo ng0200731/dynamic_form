@@ -1,24 +1,20 @@
 import { useState } from 'react';
 import type { PageSummary } from '../types';
-import { PageTree } from './PageTree';
 import { CreatePageDialog } from './CreatePageDialog';
 import { GlobalTemplateDialog } from './GlobalTemplateDialog';
 import styles from './Sidebar.module.css';
 
 interface Props {
   pages: PageSummary[];
-  selectedId: string | null;
-  onSelect: (id: string) => void;
   onCreate: (name: string, parentId: string | null) => Promise<{ id: string }>;
-  mode: 'edit' | 'lists' | 'preview' | 'global';
-  onModeChange: (m: 'edit' | 'lists' | 'preview' | 'global') => void;
+  mode: 'edit' | 'lists' | 'preview' | 'global' | 'pages';
+  onModeChange: (m: 'edit' | 'lists' | 'preview' | 'global' | 'pages') => void;
 }
 
-export function Sidebar({ pages, selectedId, onSelect, onCreate, mode, onModeChange }: Props) {
+export function Sidebar({ pages, onCreate, mode, onModeChange }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [globalOpen, setGlobalOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(true);
-  const [treeVisible, setTreeVisible] = useState(true);
 
   return (
     <aside className={styles.sidebar}>
@@ -46,12 +42,6 @@ export function Sidebar({ pages, selectedId, onSelect, onCreate, mode, onModeCha
               </button>
               <button
                 className={styles.subItem}
-                onClick={() => setTreeVisible((v) => !v)}
-              >
-                View page {treeVisible ? '(hide)' : '(show)'}
-              </button>
-              <button
-                className={styles.subItem}
                 onClick={() => setGlobalOpen(true)}
               >
                 Global — Create
@@ -62,13 +52,15 @@ export function Sidebar({ pages, selectedId, onSelect, onCreate, mode, onModeCha
               >
                 Global — View
               </button>
+              <button
+                className={mode === 'pages' ? `${styles.subItem} ${styles.subActive}` : styles.subItem}
+                onClick={() => onModeChange('pages')}
+              >
+                View Pages
+              </button>
             </div>
           )}
         </div>
-
-        {treeVisible && (
-          <PageTree pages={pages} selectedId={selectedId} onSelect={onSelect} />
-        )}
       </nav>
       {dialogOpen && (
         <CreatePageDialog

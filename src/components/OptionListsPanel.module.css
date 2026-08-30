@@ -222,10 +222,9 @@
   color: var(--text);
 }
 
-.optEmpty {
+.slugText {
   color: var(--muted);
-  font-size: 13px;
-  margin: 0;
+  font-size: 12px;
 }
 
 .actions {

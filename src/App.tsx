@@ -6,6 +6,7 @@ import { Editor } from './components/Editor';
 import { Preview } from './components/Preview';
 import { OptionListsPanel } from './components/OptionListsPanel';
 import { GlobalViewPanel } from './components/GlobalViewPanel';
+import { PagesViewPanel } from './components/PagesViewPanel';
 import styles from './App.module.css';
 
 export function App() {
@@ -58,8 +59,6 @@ export function App() {
     <div className={styles.app}>
       <Sidebar
         pages={pages}
-        selectedId={selectedId}
-        onSelect={handleSelect}
         onCreate={createPage}
         mode={mode}
         onModeChange={setMode}
@@ -89,6 +88,8 @@ export function App() {
                 <OptionListsPanel page={currentPage} onChanged={loadPage} />
               ) : mode === 'global' ? (
                 <GlobalViewPanel />
+              ) : mode === 'pages' ? (
+                <PagesViewPanel selectedId={selectedId} onSelect={handleSelect} />
               ) : (
                 <Preview page={currentPage} onNavigate={navigate} onBack={goBack} />
               )}

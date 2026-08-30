@@ -49,6 +49,10 @@ export function Toolbar({ page, pages, mode, onModeChange, onReparent }: Props) 
             <button className={styles.active} disabled>
               Global
             </button>
+          ) : mode === 'pages' ? (
+            <button className={styles.active} disabled>
+              Pages
+            </button>
           ) : (
             <button
               className={mode === 'preview' ? styles.active : ''}
