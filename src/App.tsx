@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { usePages } from './hooks/usePages';
 import { Sidebar } from './components/Sidebar';
 import { Toolbar } from './components/Toolbar';
@@ -7,6 +7,7 @@ import { Preview } from './components/Preview';
 import { OptionListsPanel } from './components/OptionListsPanel';
 import { GlobalViewPanel } from './components/GlobalViewPanel';
 import { PagesViewPanel } from './components/PagesViewPanel';
+import { api } from './api';
 import styles from './App.module.css';
 
 export function App() {
@@ -100,7 +101,6 @@ export function App() {
                 <GlobalViewPanel />
               ) : mode === 'pages' ? (
                 <PagesViewPanel
-                  selectedId={selectedId}
                   onSelect={handleSelect}
                   onEdit={(id) => {
                     loadPage(id);

@@ -4,12 +4,11 @@ import { api } from '../api';
 import styles from './OptionListsPanel.module.css';
 
 interface Props {
-  selectedId: string | null;
   onSelect: (id: string) => void;
   onEdit: (id: string) => void;
 }
 
-export function PagesViewPanel({ selectedId, onSelect, onEdit }: Props) {
+export function PagesViewPanel({ onSelect, onEdit }: Props) {
   const [pages, setPages] = useState<PageSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,11 +55,6 @@ export function PagesViewPanel({ selectedId, onSelect, onEdit }: Props) {
             <div className={styles.boxHead}>
               <span className={styles.boxName}>{p.name}</span>
               {p.parentId && <span className={styles.tag}>child</span>}
-              {selectedId === p.id && (
-                <span className={styles.tag} style={{ background: 'rgba(16,124,16,0.12)', color: 'var(--ok)' }}>
-                  current
-                </span>
-              )}
             </div>
             <span className={styles.slugText}>/{p.slug}</span>
           </div>
@@ -76,8 +70,8 @@ export function PagesViewPanel({ selectedId, onSelect, onEdit }: Props) {
       ))}
 
       {confirm && (
-        <div className={styles.modalBackdrop} onClick={() => setConfirm(null)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalBackdrop}>
+          <div className={styles.modal}>
             <p>
               Delete the page <strong>{confirm.name}</strong>? This cannot be undone.
             </p>

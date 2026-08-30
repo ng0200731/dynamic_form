@@ -70,7 +70,7 @@ export function Sidebar({ pages, onCreate, mode, onModeChange }: Props) {
         />
       )}
       {globalOpen && (
-        <GlobalTemplateDialog onClose={() => setGlobalOpen(false)} />
+        <GlobalTemplateDialog onClose={() => setGlobalOpen(false)} onSaved={() => onModeChange('global')} />
       )}
     </aside>
   );

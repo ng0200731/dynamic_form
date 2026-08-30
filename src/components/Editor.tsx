@@ -169,7 +169,7 @@ function AddFieldMenu({ onAdd }: { onAdd: (t: FieldType) => void }) {
       </button>
       {open && (
         <>
-          <div className={styles.menuOverlay} onClick={() => setOpen(false)} />
+          <div className={styles.menuOverlay} />
           <div className={styles.menuDialog}>
             <h3 className={styles.menuTitle}>Add Field</h3>
             <div className={styles.menuGrid}>

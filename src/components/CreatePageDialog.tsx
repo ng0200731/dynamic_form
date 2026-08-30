@@ -39,8 +39,8 @@ export function CreatePageDialog({ pages, onClose, onCreate }: Props) {
   };
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.dialog} onClick={(e) => e.stopPropagation()}>
+    <div className={styles.overlay}>
+      <div className={styles.dialog}>
         <h2 className={styles.title}>New Page</h2>
         <form onSubmit={submit}>
           <label className={styles.field}>

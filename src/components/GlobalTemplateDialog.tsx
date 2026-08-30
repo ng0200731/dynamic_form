@@ -69,8 +69,8 @@ export function GlobalTemplateDialog({ onClose, onSaved }: Props) {
   };
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.dialog} onClick={(e) => e.stopPropagation()}>
+    <div className={styles.overlay}>
+      <div className={styles.dialog}>
         <h2 className={styles.title}>Global Form Element</h2>
         <form onSubmit={submit}>
           <label className={styles.field}>
@@ -93,6 +93,16 @@ export function GlobalTemplateDialog({ onClose, onSaved }: Props) {
                 </button>
               ))}
             </div>
+          </label>
+
+          <label className={styles.field}>
+            <span>Unique name</span>
+            <input
+              autoFocus
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Payment Method"
+            />
           </label>
 
           {needsOptions && (
@@ -132,16 +142,6 @@ export function GlobalTemplateDialog({ onClose, onSaved }: Props) {
               </div>
             </label>
           )}
-
-          <label className={styles.field}>
-            <span>Unique name</span>
-            <input
-              autoFocus
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Payment Method"
-            />
-          </label>
 
           {error && <p className={styles.error}>{error}</p>}
 

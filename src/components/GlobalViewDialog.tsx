@@ -22,8 +22,8 @@ export function GlobalViewDialog({ onClose, onPick }: Props) {
   }, []);
 
   return (
-    <div className={styles.overlay} onClick={onClose}>
-      <div className={styles.dialog} onClick={(e) => e.stopPropagation()}>
+    <div className={styles.overlay}>
+      <div className={styles.dialog}>
         <h2 className={styles.title}>Global Templates</h2>
         <p className={styles.sub}>
           Reusable form elements. Reference them from a field's “Option source” in the Edit tab.

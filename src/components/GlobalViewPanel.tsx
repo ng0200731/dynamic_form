@@ -167,8 +167,8 @@ export function GlobalViewPanel() {
       ))}
 
       {confirm && (
-        <div className={styles.modalBackdrop} onClick={() => setConfirm(null)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalBackdrop}>
+          <div className={styles.modal}>
             <p>
               Delete the template <strong>{confirm.name}</strong> and all its options? Fields referencing
               it will lose their options.
