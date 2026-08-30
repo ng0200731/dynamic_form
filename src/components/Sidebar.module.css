@@ -1,0 +1,90 @@
+.sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  padding: 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  font-weight: 600;
+}
+
+.newBtn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+
+.newBtn:hover {
+  background: var(--accent-hover);
+}
+
+.nav {
+  flex: 1;
+  overflow: auto;
+  padding: 8px;
+}
+
+.settingsGroup {
+  margin-bottom: 10px;
+}
+
+.settingsBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.settingsBtn:hover {
+  background: #eef2f7;
+}
+
+.caret {
+  font-size: 11px;
+  color: var(--muted);
+  width: 10px;
+  display: inline-block;
+}
+
+.submenu {
+  padding: 4px 0 4px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.subItem {
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.subItem:hover {
+  background: #eef2f7;
+}

@@ -1,0 +1,163 @@
+.editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+
+.toolbar button {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+
+.toolbar .save {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.saved {
+  color: var(--ok);
+  font-size: 13px;
+}
+
+.body {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+}
+
+.canvas {
+  flex: 1;
+  overflow: auto;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.empty {
+  color: var(--muted);
+}
+
+.row {
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 12px;
+  background: #fafbfc;
+}
+
+.rowHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.rowDel {
+  background: transparent;
+  border: none;
+  color: var(--danger);
+  font-size: 12px;
+}
+
+.cols1,
+.cols2 {
+  display: grid;
+  gap: 12px;
+}
+
+.cols2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.col {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+  min-height: 60px;
+}
+
+.fieldChip {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: #eef2f7;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.chipSelected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(47, 109, 246, 0.25);
+}
+
+.addMenu {
+  position: relative;
+}
+
+.addBtn {
+  width: 100%;
+  background: #fff;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  padding: 6px;
+  color: var(--muted);
+}
+
+.menu {
+  position: absolute;
+  bottom: 34px;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+
+.menu button {
+  background: #fff;
+  border: none;
+  text-align: left;
+  padding: 8px 10px;
+}
+
+.menu button:hover {
+  background: #eef2f7;
+}
+
+.sidePanel {
+  width: 320px;
+  flex-shrink: 0;
+  overflow: auto;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+}

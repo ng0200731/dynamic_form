@@ -1,0 +1,195 @@
+.panel {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.title {
+  margin: 0 0 4px;
+  font-size: 20px;
+}
+
+.sub {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.error {
+  background: #fdecea;
+  color: #b71c1c;
+  border: 1px solid #f5c6c2;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.empty {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.box {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 16px;
+  background: #fff;
+}
+
+.boxHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.boxName {
+  flex: 1;
+  font-size: 15px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+
+.boxName:focus {
+  border-color: var(--border);
+  outline: none;
+}
+
+.reorder {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.reorder button {
+  border: 1px solid var(--border);
+  background: #f4f6f8;
+  border-radius: 4px;
+  width: 26px;
+  height: 20px;
+  line-height: 1;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.reorder button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.delBox {
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  background: transparent;
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.optList {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+}
+
+.optList li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+  border-bottom: 1px solid #f0f2f4;
+}
+
+.optVal {
+  flex: 1;
+}
+
+.optEmpty {
+  color: var(--muted);
+  font-style: italic;
+  border: none;
+}
+
+.delOpt {
+  border: none;
+  background: transparent;
+  color: var(--danger);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.optAdd {
+  display: flex;
+  gap: 6px;
+}
+
+.optAdd input {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.addList {
+  display: flex;
+  gap: 8px;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+.addList input {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.addList button,
+.optAdd button {
+  border: 1px solid var(--border);
+  background: #f4f6f8;
+  border-radius: 6px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  max-width: 420px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+}
+
+.modal p {
+  margin: 0 0 16px;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modalActions button {
+  border: 1px solid var(--border);
+  background: #f4f6f8;
+  border-radius: 6px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
