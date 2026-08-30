@@ -36,6 +36,7 @@ interface FieldRow {
   options: string | null;
   option_list_id: string | null;
   global_template_id: string | null;
+  input_mode: string | null;
   position: number;
   link_type: string | null;
   link_target_page_id: string | null;
@@ -49,6 +50,7 @@ interface GlobalTemplateRow {
   name: string;
   type: string;
   options: string;
+  input_mode: string | null;
   created_at: string;
 }
 
@@ -66,6 +68,7 @@ function mapGlobalTemplate(r: GlobalTemplateRow): GlobalTemplate {
     name: r.name,
     type: r.type as Field['type'],
     options: r.options ? (JSON.parse(r.options) as string[]) : [],
+    inputMode: (r.input_mode as GlobalTemplate['inputMode']) ?? undefined,
   };
 }
 
@@ -98,6 +101,7 @@ function mapField(r: FieldRow): Field {
     options: r.options ? (JSON.parse(r.options) as string[]) : undefined,
     optionListId: r.option_list_id ?? undefined,
     globalTemplateId: r.global_template_id ?? undefined,
+    inputMode: (r.input_mode as Field['inputMode']) ?? undefined,
     link: r.link_type
       ? {
           type: r.link_type as 'page' | 'url' | 'action',
@@ -111,7 +115,12 @@ function mapField(r: FieldRow): Field {
 }
 
 export const repository = {
-  createGlobalTemplate(name: string, type: Field['type'], options: string[]): GlobalTemplate {
+  createGlobalTemplate(
+    name: string,
+    type: Field['type'],
+    options: string[],
+    inputMode?: GlobalTemplate['inputMode'],
+  ): GlobalTemplate {
     const nameExists = db.prepare('SELECT 1 FROM global_templates WHERE name = ?').get(name);
     if (nameExists) {
       const err = new Error('NAME_TAKEN') as Error & { code?: string };
@@ -121,21 +130,21 @@ export const repository = {
     const id = generateId();
     const now = new Date().toISOString();
     db.prepare(
-      'INSERT INTO global_templates (id, name, type, options, created_at) VALUES (?, ?, ?, ?, ?)',
-    ).run(id, name, type, JSON.stringify(options), now);
-    return { id, name, type, options };
+      'INSERT INTO global_templates (id, name, type, options, input_mode, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+    ).run(id, name, type, JSON.stringify(options), inputMode ?? null, now);
+    return { id, name, type, options, inputMode };
   },
 
   listGlobalTemplates(): GlobalTemplate[] {
     const rows = db
-      .prepare('SELECT id, name, type, options, created_at FROM global_templates ORDER BY created_at')
+      .prepare('SELECT id, name, type, options, input_mode, created_at FROM global_templates ORDER BY created_at')
       .all() as GlobalTemplateRow[];
     return rows.map(mapGlobalTemplate);
   },
 
   updateGlobalTemplate(
     id: string,
-    patch: { name?: string; options?: string[] },
+    patch: { name?: string; options?: string[]; inputMode?: GlobalTemplate['inputMode'] },
   ): GlobalTemplate {
     const existing = db.prepare('SELECT 1 FROM global_templates WHERE id = ?').get(id);
     if (!existing) {
@@ -164,13 +173,19 @@ export const repository = {
           id,
         );
       }
+      if (patch.inputMode !== undefined) {
+        db.prepare('UPDATE global_templates SET input_mode = ? WHERE id = ?').run(
+          patch.inputMode ?? null,
+          id,
+        );
+      }
       db.exec('COMMIT');
     } catch (e) {
       db.exec('ROLLBACK');
       throw e;
     }
     const row = db
-      .prepare('SELECT id, name, type, options, created_at FROM global_templates WHERE id = ?')
+      .prepare('SELECT id, name, type, options, input_mode, created_at FROM global_templates WHERE id = ?')
       .get(id) as GlobalTemplateRow;
     return mapGlobalTemplate(row);
   },
@@ -196,8 +211,8 @@ export const repository = {
       .prepare('SELECT id, page_id, columns, position FROM rows WHERE page_id = ? ORDER BY position')
       .all(id) as RowRow[];
 
-    const fieldStmt = db.prepare(
-      'SELECT id, row_id, type, label, required, placeholder, options, option_list_id, global_template_id, position, link_type, link_target_page_id, link_url, link_action, link_open_in FROM fields WHERE row_id = ? ORDER BY position',
+      const fieldStmt = db.prepare(
+      'SELECT id, row_id, type, label, required, placeholder, options, option_list_id, global_template_id, input_mode, position, link_type, link_target_page_id, link_url, link_action, link_open_in FROM fields WHERE row_id = ? ORDER BY position',
     );
 
     const rows: Row[] = rowRows.map((rr) => {
@@ -406,8 +421,8 @@ export const repository = {
           'INSERT INTO rows (id, page_id, columns, position) VALUES (?, ?, ?, ?)',
         );
         const insField = db.prepare(
-          `INSERT INTO fields (id, row_id, type, label, required, placeholder, options, option_list_id, global_template_id, position, link_type, link_target_page_id, link_url, link_action, link_open_in)
-           VALUES (@id, @row_id, @type, @label, @required, @placeholder, @options, @option_list_id, @global_template_id, @position, @link_type, @link_target_page_id, @link_url, @link_action, @link_open_in)`,
+          `INSERT INTO fields (id, row_id, type, label, required, placeholder, options, option_list_id, global_template_id, input_mode, position, link_type, link_target_page_id, link_url, link_action, link_open_in)
+           VALUES (@id, @row_id, @type, @label, @required, @placeholder, @options, @option_list_id, @global_template_id, @input_mode, @position, @link_type, @link_target_page_id, @link_url, @link_action, @link_open_in)`,
         );
 
         patch.rows.forEach((row, ri) => {
@@ -425,6 +440,7 @@ export const repository = {
               options: f.options ? JSON.stringify(f.options) : null,
               option_list_id: f.optionListId ?? null,
               global_template_id: f.globalTemplateId ?? null,
+              input_mode: f.inputMode ?? null,
               position: fi,
               link_type: f.link?.type ?? null,
               link_target_page_id: f.link?.targetPageId ?? null,

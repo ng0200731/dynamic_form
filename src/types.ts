@@ -8,6 +8,9 @@ export type FieldType =
   | 'image'
   | 'button';
 
+// Restriction applied to `input` fields.
+export type InputMode = 'numeric' | 'alphabet' | 'alphanumeric';
+
 export type LinkType = 'page' | 'url' | 'action';
 export type LinkAction = 'submit' | 'back' | 'close';
 export type LinkOpenIn = 'same' | 'new';
@@ -29,6 +32,7 @@ export interface Field {
   options?: string[];
   optionListId?: string;
   globalTemplateId?: string;
+  inputMode?: InputMode;
   link?: FieldLink;
 }
 
@@ -64,6 +68,7 @@ export interface GlobalTemplate {
   name: string;
   type: FieldType;
   options: string[];
+  inputMode?: InputMode;
 }
 
 export interface PageSummary {

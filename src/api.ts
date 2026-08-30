@@ -71,12 +71,12 @@ export const api = {
   },
   globalTemplates: {
     list: () => request<GlobalTemplate[]>('/global-templates'),
-    create: (name: string, type: string, options: string[]) =>
+    create: (name: string, type: string, options: string[], inputMode?: string) =>
       request<GlobalTemplate>('/global-templates', {
         method: 'POST',
-        body: JSON.stringify({ name, type, options }),
+        body: JSON.stringify({ name, type, options, inputMode }),
       }),
-    update: (id: string, patch: { name?: string; options?: string[] }) =>
+    update: (id: string, patch: { name?: string; options?: string[]; inputMode?: string }) =>
       request<GlobalTemplate>(`/global-templates/${id}`, {
         method: 'PUT',
         body: JSON.stringify(patch),

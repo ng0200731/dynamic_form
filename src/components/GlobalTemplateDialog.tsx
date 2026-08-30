@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { FieldType } from '../types';
+import type { FieldType, InputMode } from '../types';
 import { api } from '../api';
 import styles from './CreatePageDialog.module.css';
 
@@ -11,7 +11,7 @@ interface Props {
 const TEMPLATE_TYPES: { value: FieldType; label: string }[] = [
   { value: 'dropdown', label: 'Dropdown' },
   { value: 'radio', label: 'Radio' },
-  { value: 'input', label: 'Add Field' },
+  { value: 'input', label: 'input' },
   { value: 'textarea', label: 'Textarea' },
   { value: 'button', label: 'Button' },
   { value: 'image', label: 'Image' },
@@ -23,6 +23,7 @@ export function GlobalTemplateDialog({ onClose, onSaved }: Props) {
   const [name, setName] = useState('');
   const [type, setType] = useState<FieldType | ''>('');
   const [options, setOptions] = useState<string[]>([]);
+  const [inputMode, setInputMode] = useState<InputMode>('alphanumeric');
   const [newOption, setNewOption] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -53,7 +54,8 @@ export function GlobalTemplateDialog({ onClose, onSaved }: Props) {
     setBusy(true);
     setError(null);
     try {
-      await api.globalTemplates.create(name.trim(), type, options);
+      const finalInputMode = type === 'input' ? inputMode : undefined;
+      await api.globalTemplates.create(name.trim(), type, options, finalInputMode);
       onSaved?.();
       onClose();
     } catch (err) {
@@ -104,6 +106,20 @@ export function GlobalTemplateDialog({ onClose, onSaved }: Props) {
               placeholder="e.g. Payment Method"
             />
           </label>
+
+          {type === 'input' && (
+            <label className={styles.field}>
+              <span>Input restriction</span>
+              <select
+                value={inputMode}
+                onChange={(e) => setInputMode(e.target.value as InputMode)}
+              >
+                <option value="numeric">Numeric only</option>
+                <option value="alphabet">Alphabet only</option>
+                <option value="alphanumeric">Numeric + Alphabet</option>
+              </select>
+            </label>
+          )}
 
           {needsOptions && (
             <label className={styles.field}>

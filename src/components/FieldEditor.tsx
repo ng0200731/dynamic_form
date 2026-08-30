@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { Field, LinkAction, LinkOpenIn, LinkType, OptionList, GlobalTemplate } from '../types';
+import type { Field, LinkAction, LinkOpenIn, LinkType, OptionList, GlobalTemplate, InputMode } from '../types';
 import { FIELD_TYPES, OPTION_FIELD_TYPES } from '../types';
 import { api } from '../api';
 import styles from './FieldEditor.module.css';
@@ -79,6 +79,20 @@ export function FieldEditor({ field, linkTargets, optionLists, onChange, onDelet
             </label>
           )}
 
+          {field.type === 'input' && (
+            <label className={styles.field}>
+              <span>Input restriction</span>
+              <select
+                value={field.inputMode ?? 'alphanumeric'}
+                onChange={(e) => update({ inputMode: e.target.value as InputMode })}
+              >
+                <option value="numeric">Numeric only</option>
+                <option value="alphabet">Alphabet only</option>
+                <option value="alphanumeric">Numeric + Alphabet</option>
+              </select>
+            </label>
+          )}
+
           {hasOptions && (
             <div className={styles.options}>
               <span className={styles.optTitle}>Options</span>
@@ -126,7 +140,11 @@ export function FieldEditor({ field, linkTargets, optionLists, onChange, onDelet
 
               {field.globalTemplateId && selectedGlobal ? (
                 <p className={styles.hint}>
-                  Using global template <strong>{selectedGlobal.name}</strong> ({selectedGlobal.type}).
+                  Using global template <strong>{selectedGlobal.name}</strong> ({selectedGlobal.type})
+                  {selectedGlobal.inputMode && selectedGlobal.inputMode !== 'alphanumeric'
+                    ? ` · restriction: ${selectedGlobal.inputMode === 'numeric' ? 'numeric only' : 'alphabet only'}`
+                    : ''}
+                  .
                 </p>
               ) : usesList ? (
                 <p className={styles.hint}>Managed in the Lists tab.</p>

@@ -44,6 +44,7 @@ db.exec(`
     link_url            TEXT,
     link_action         TEXT,
     link_open_in        TEXT,
+    input_mode          TEXT CHECK (input_mode IN (NULL,'numeric','alphabet','alphanumeric')),
     FOREIGN KEY (row_id)              REFERENCES rows(id) ON DELETE CASCADE,
     FOREIGN KEY (link_target_page_id) REFERENCES pages(id) ON DELETE SET NULL
   );
@@ -63,6 +64,7 @@ db.exec(`
     name     TEXT UNIQUE NOT NULL,
     type     TEXT NOT NULL,
     options  TEXT NOT NULL DEFAULT '[]',
+    input_mode TEXT,
     created_at TEXT NOT NULL
   );
 `);
@@ -74,6 +76,7 @@ db.exec(`
     name     TEXT UNIQUE NOT NULL,
     type     TEXT NOT NULL,
     options  TEXT NOT NULL DEFAULT '[]',
+    input_mode TEXT,
     created_at TEXT NOT NULL
   );
 `);
@@ -85,4 +88,13 @@ const hasGlobalTemplateId = db
   .some((col: any) => col.name === 'global_template_id');
 if (!hasGlobalTemplateId) {
   db.exec('ALTER TABLE fields ADD COLUMN global_template_id TEXT');
+}
+
+// Migration: add input_mode column to global_templates if missing.
+const hasGtInputMode = db
+  .prepare("PRAGMA table_info(global_templates)")
+  .all()
+  .some((col: any) => col.name === 'input_mode');
+if (!hasGtInputMode) {
+  db.exec("ALTER TABLE global_templates ADD COLUMN input_mode TEXT");
 }

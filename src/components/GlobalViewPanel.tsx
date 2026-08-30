@@ -154,6 +154,7 @@ export function GlobalViewPanel() {
             {t.options.length === 0 && <li className={styles.optEmpty}>No options.</li>}
           </ul>
 
+          {t.type !== 'input' && (
           <div className={styles.optAdd}>
             <input
               value={newOption[t.id] ?? ''}
@@ -163,6 +164,7 @@ export function GlobalViewPanel() {
             />
             <button onClick={() => addOption(t)}>Add</button>
           </div>
+          )}
         </div>
       ))}
 

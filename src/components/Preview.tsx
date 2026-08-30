@@ -96,7 +96,23 @@ export function Preview({ page, onNavigate, onBack, showBack }: Props) {
             <input
               value={value}
               placeholder={f.placeholder}
-              onChange={(e) => setValue(f.id, e.target.value)}
+              inputMode={
+                f.inputMode === 'numeric'
+                  ? 'numeric'
+                  : f.inputMode === 'alphabet'
+                    ? 'text'
+                    : undefined
+              }
+              onChange={(e) => {
+                const raw = e.target.value;
+                let filtered = raw;
+                if (f.inputMode === 'numeric') filtered = raw.replace(/[^0-9]/g, '');
+                else if (f.inputMode === 'alphabet') filtered = raw.replace(/[^a-zA-Z]/g, '');
+                if (filtered !== raw) {
+                  e.target.value = filtered;
+                }
+                setValue(f.id, filtered);
+              }}
             />
             {err && <small className={styles.err}>{err}</small>}
           </label>

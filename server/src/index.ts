@@ -83,12 +83,17 @@ api.post('/global-templates', (req, res) => {
   const name = String(req.body?.name ?? '').trim();
   const type = String(req.body?.type ?? '');
   const options = Array.isArray(req.body?.options) ? (req.body.options as string[]) : [];
+  const inputModeRaw = req.body?.inputMode;
+  const inputMode =
+    inputModeRaw === 'numeric' || inputModeRaw === 'alphabet' || inputModeRaw === 'alphanumeric'
+      ? (inputModeRaw as 'numeric' | 'alphabet' | 'alphanumeric')
+      : undefined;
   if (!name) return res.status(400).json({ error: 'Name is required' });
   if (!['input', 'textarea', 'dropdown', 'radio', 'image', 'button'].includes(type)) {
     return res.status(400).json({ error: 'Invalid field type' });
   }
   try {
-    const tpl = repository.createGlobalTemplate(name, type as Field['type'], options);
+    const tpl = repository.createGlobalTemplate(name, type as Field['type'], options, inputMode);
     res.status(201).json(tpl);
   } catch (e) {
     if ((e as { code?: string }).code === 'NAME_TAKEN') {
@@ -99,11 +104,16 @@ api.post('/global-templates', (req, res) => {
 });
 
 api.put('/global-templates/:id', (req, res) => {
-  const { name, options } = req.body ?? {};
+  const { name, options, inputMode } = req.body ?? {};
+  const inputModeVal =
+    inputMode === 'numeric' || inputMode === 'alphabet' || inputMode === 'alphanumeric'
+      ? (inputMode as 'numeric' | 'alphabet' | 'alphanumeric')
+      : undefined;
   try {
     const tpl = repository.updateGlobalTemplate(req.params.id, {
       name: name !== undefined ? String(name).trim() : undefined,
       options: Array.isArray(options) ? (options as string[]) : undefined,
+      inputMode: inputModeVal,
     });
     res.json(tpl);
   } catch (e) {
