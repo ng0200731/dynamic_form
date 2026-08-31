@@ -21,9 +21,6 @@ export function Sidebar({ pages, onCreate, mode, onModeChange, onGlobalSaved }: 
     <aside className={styles.sidebar}>
       <div className={styles.header}>
         <span className={styles.brand}>Page Builder</span>
-        <button className={styles.newBtn} onClick={() => setDialogOpen(true)}>
-          + New Page
-        </button>
       </div>
       <nav className={styles.nav}>
         <div className={styles.settingsGroup}>
