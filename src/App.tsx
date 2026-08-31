@@ -7,6 +7,7 @@ import { Preview } from './components/Preview';
 import { OptionListsPanel } from './components/OptionListsPanel';
 import { GlobalViewPanel } from './components/GlobalViewPanel';
 import { PagesViewPanel } from './components/PagesViewPanel';
+import { HierarchyPanel } from './components/HierarchyPanel';
 import styles from './App.module.css';
 
 export function App() {
@@ -138,6 +139,8 @@ export function App() {
                   setCameFromPages={setCameFromPages}
                   setPreviewOrigin={setPreviewOrigin}
                 />
+              ) : mode === 'hierarchy' ? (
+                <HierarchyPanel onChanged={loadPage} />
               ) : (
                 <Preview
                   page={currentPage}

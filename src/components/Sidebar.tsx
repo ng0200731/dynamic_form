@@ -7,8 +7,8 @@ import styles from './Sidebar.module.css';
 interface Props {
   pages: PageSummary[];
   onCreate: (name: string, parentId: string | null) => Promise<{ id: string }>;
-  mode: 'edit' | 'lists' | 'preview' | 'global' | 'pages';
-  onModeChange: (m: 'edit' | 'lists' | 'preview' | 'global' | 'pages') => void;
+  mode: 'edit' | 'lists' | 'preview' | 'global' | 'pages' | 'hierarchy';
+  onModeChange: (m: 'edit' | 'lists' | 'preview' | 'global' | 'pages' | 'hierarchy') => void;
   onGlobalSaved?: () => void;
 }
 
@@ -32,7 +32,7 @@ export function Sidebar({ pages, onCreate, mode, onModeChange, onGlobalSaved }: 
             aria-expanded={settingsOpen}
           >
             <span className={styles.caret}>{settingsOpen ? '▾' : '▸'}</span>
-            ⚙ Settings
+            Settings
           </button>
 
           {settingsOpen && (
@@ -82,6 +82,12 @@ export function Sidebar({ pages, onCreate, mode, onModeChange, onGlobalSaved }: 
                   </button>
                 </div>
               )}
+              <button
+                className={mode === 'hierarchy' ? `${styles.subItem} ${styles.subActive}` : styles.subItem}
+                onClick={() => onModeChange('hierarchy')}
+              >
+                Hierarchy
+              </button>
             </div>
           )}
         </div>
