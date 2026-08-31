@@ -16,6 +16,8 @@ export function Sidebar({ pages, onCreate, mode, onModeChange, onGlobalSaved }: 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [globalOpen, setGlobalOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(true);
+  const [pageOpen, setPageOpen] = useState(true);
+  const [optionOpen, setOptionOpen] = useState(true);
 
   return (
     <aside className={styles.sidebar}>
@@ -35,27 +37,51 @@ export function Sidebar({ pages, onCreate, mode, onModeChange, onGlobalSaved }: 
 
           {settingsOpen && (
             <div className={styles.submenu}>
-              <button className={styles.subItem} onClick={() => setDialogOpen(true)}>
-                Page Create
-              </button>
-              <button
-                className={mode === 'pages' ? `${styles.subItem} ${styles.subActive}` : styles.subItem}
-                onClick={() => onModeChange('pages')}
-              >
-                Page View
-              </button>
               <button
                 className={styles.subItem}
-                onClick={() => setGlobalOpen(true)}
+                onClick={() => setPageOpen((o) => !o)}
+                aria-expanded={pageOpen}
               >
-                Global Create
+                <span className={styles.caret}>{pageOpen ? '▾' : '▸'}</span>
+                Page
               </button>
+              {pageOpen && (
+                <div className={styles.submenu}>
+                  <button className={styles.subItem} onClick={() => setDialogOpen(true)}>
+                    Page Create
+                  </button>
+                  <button
+                    className={mode === 'pages' ? `${styles.subItem} ${styles.subActive}` : styles.subItem}
+                    onClick={() => onModeChange('pages')}
+                  >
+                    Page View
+                  </button>
+                </div>
+              )}
               <button
-                className={mode === 'global' ? `${styles.subItem} ${styles.subActive}` : styles.subItem}
-                onClick={() => onModeChange('global')}
+                className={styles.subItem}
+                onClick={() => setOptionOpen((o) => !o)}
+                aria-expanded={optionOpen}
               >
-                Global View
+                <span className={styles.caret}>{optionOpen ? '▾' : '▸'}</span>
+                Option
               </button>
+              {optionOpen && (
+                <div className={styles.submenu}>
+                  <button
+                    className={styles.subItem}
+                    onClick={() => setGlobalOpen(true)}
+                  >
+                    Global Create
+                  </button>
+                  <button
+                    className={mode === 'global' ? `${styles.subItem} ${styles.subActive}` : styles.subItem}
+                    onClick={() => onModeChange('global')}
+                  >
+                    Global View
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
