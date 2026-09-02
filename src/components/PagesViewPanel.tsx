@@ -9,7 +9,7 @@ interface Props {
   loadPage: (id: string) => void;
   setMode: (m: 'edit' | 'lists' | 'preview' | 'global' | 'pages') => void;
   setCameFromPages: (v: boolean) => void;
-  setPreviewOrigin: (v: 'pages' | 'edit' | null) => void;
+  setPreviewOrigin: (v: 'pages' | 'edit' | 'hierarchy' | null) => void;
 }
 
 export function PagesViewPanel({ onSelect, onEdit, loadPage, setMode, setCameFromPages, setPreviewOrigin }: Props) {

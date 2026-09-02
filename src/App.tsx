@@ -38,7 +38,7 @@ export function App() {
   // Track previous page id for the "Go Back" button action in preview.
   const [previousId, setPreviousId] = useState<string | null>(null);
   // Where the current preview was launched from: 'pages' or 'edit'.
-  const [previewOrigin, setPreviewOrigin] = useState<'pages' | 'edit' | null>(null);
+  const [previewOrigin, setPreviewOrigin] = useState<'pages' | 'edit' | 'hierarchy' | null>(null);
 
   const navigate = useCallback(
     (pageId: string, openIn: 'same' | 'new') => {
@@ -64,6 +64,11 @@ export function App() {
       setMode('edit');
       return;
     }
+    if (previewOrigin === 'hierarchy') {
+      setPreviewOrigin(null);
+      setMode('hierarchy');
+      return;
+    }
     if (previousId) {
       setPreviousId(null);
       loadPage(previousId);
@@ -80,6 +85,16 @@ export function App() {
     [loadPage],
   );
 
+  const handleHierarchyPageSelect = useCallback(
+    (id: string) => {
+      setPreviousId(null);
+      setPreviewOrigin('hierarchy');
+      loadPage(id);
+      setMode('preview');
+    },
+    [loadPage, setMode],
+  );
+
   return (
     <div className={styles.app}>
       <Sidebar
@@ -89,7 +104,7 @@ export function App() {
         mode={mode}
         onModeChange={setMode}
         onGlobalSaved={() => setGlobalReloadNonce((n) => n + 1)}
-        onSelectPage={handleSelect}
+        onSelectPage={handleHierarchyPageSelect}
         selectedId={selectedId}
       />
       <main className={styles.main}>
@@ -161,7 +176,7 @@ export function App() {
                   page={currentPage}
                   onNavigate={navigate}
                   onBack={previewBack}
-                  showBack={previewOrigin === 'edit'}
+                  showBack={previewOrigin === 'edit' || previewOrigin === 'hierarchy'}
                 />
               )}
             </div>
