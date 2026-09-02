@@ -105,8 +105,11 @@ export function App() {
             nodes={hierarchy.nodes}
             onRename={hierarchy.renameNode}
             onMove={hierarchy.moveNode}
+            pages={pages}
             onCreate={hierarchy.createNode}
             onDelete={hierarchy.deleteNode}
+            availablePages={hierarchy.availablePages}
+            onAssignPage={hierarchy.assignPage}
           />
         ) : currentPage ? (
           <>

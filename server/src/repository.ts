@@ -68,6 +68,7 @@ interface HierarchyNodeRow {
   name: string;
   parent_id: string | null;
   order: number;
+  page_id: string | null;
 }
 
 function mapGlobalTemplate(r: GlobalTemplateRow): GlobalTemplate {
@@ -514,13 +515,14 @@ export const repository = {
 
   listHierarchy(): HierarchyNode[] {
     const rows = db
-      .prepare('SELECT id, name, parent_id, "order" FROM hierarchy_nodes ORDER BY "order"')
+      .prepare('SELECT id, name, parent_id, "order", page_id FROM hierarchy_nodes ORDER BY "order"')
       .all() as HierarchyNodeRow[];
     return rows.map((r) => ({
       id: r.id,
       name: r.name,
       parentId: r.parent_id,
       order: r.order,
+      pageId: r.page_id,
     }));
   },
 
@@ -550,7 +552,7 @@ export const repository = {
     db.prepare(
       'INSERT INTO hierarchy_nodes (id, name, parent_id, "order") VALUES (?, ?, ?, ?)',
     ).run(id, trimmed, parentId, maxOrder.m + 1);
-    return { id, name: trimmed, parentId, order: maxOrder.m + 1 };
+    return { id, name: trimmed, parentId, order: maxOrder.m + 1, pageId: null };
   },
 
   renameHierarchyNode(id: string, name: string): HierarchyNode {
@@ -573,10 +575,52 @@ export const repository = {
 
   getHierarchyNode(id: string): HierarchyNode | null {
     const r = db
-      .prepare('SELECT id, name, parent_id, "order" FROM hierarchy_nodes WHERE id = ?')
+      .prepare('SELECT id, name, parent_id, "order", page_id FROM hierarchy_nodes WHERE id = ?')
       .get(id) as HierarchyNodeRow | undefined;
     if (!r) return null;
-    return { id: r.id, name: r.name, parentId: r.parent_id, order: r.order };
+    return { id: r.id, name: r.name, parentId: r.parent_id, order: r.order, pageId: r.page_id };
+  },
+
+  assignHierarchyNodePage(id: string, pageId: string | null): HierarchyNode {
+    const node = this.getHierarchyNode(id);
+    if (!node) {
+      const err = new Error('NOT_FOUND') as Error & { code?: string };
+      err.code = 'NOT_FOUND';
+      throw err;
+    }
+    if (pageId !== null) {
+      const page = db.prepare('SELECT 1 FROM pages WHERE id = ?').get(pageId);
+      if (!page) {
+        const err = new Error('PAGE_NOT_FOUND') as Error & { code?: string };
+        err.code = 'PAGE_NOT_FOUND';
+        throw err;
+      }
+      const used = db
+        .prepare('SELECT 1 FROM hierarchy_nodes WHERE page_id = ? AND id != ?')
+        .get(pageId, id);
+      if (used) {
+        const err = new Error('PAGE_ALREADY_LINKED') as Error & { code?: string };
+        err.code = 'PAGE_ALREADY_LINKED';
+        throw err;
+      }
+    }
+    db.prepare('UPDATE hierarchy_nodes SET page_id = ? WHERE id = ?').run(pageId, id);
+    return this.getHierarchyNode(id)!;
+  },
+
+  availableHierarchyPages(nodeId: string): PageSummary[] {
+    const rows = db
+      .prepare(
+        `SELECT p.id, p.name, p.slug, p.parent_id, p."order"
+         FROM pages p
+         WHERE p.id NOT IN (
+           SELECT page_id FROM hierarchy_nodes
+           WHERE page_id IS NOT NULL AND id != ?
+         )
+         ORDER BY p."order", p.created_at`,
+      )
+      .all(nodeId) as PageRow[];
+    return rows.map(mapPage);
   },
 
   moveHierarchyNode(

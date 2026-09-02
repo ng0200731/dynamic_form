@@ -125,6 +125,27 @@ api.delete('/hierarchy/:id', (req, res) => {
   res.status(204).end();
 });
 
+api.get('/hierarchy/:id/available-pages', (req, res) => {
+  res.json(repository.availableHierarchyPages(req.params.id));
+});
+
+api.put('/hierarchy/:id/page', (req, res) => {
+  const raw = req.body?.pageId;
+  const pageId = raw && raw !== '' ? String(raw) : null;
+  try {
+    const node = repository.assignHierarchyNodePage(req.params.id, pageId);
+    res.json(node);
+  } catch (e) {
+    const code = (e as { code?: string }).code;
+    if (code === 'NOT_FOUND') return res.status(404).json({ error: 'Node not found' });
+    if (code === 'PAGE_NOT_FOUND') return res.status(404).json({ error: 'Page not found' });
+    if (code === 'PAGE_ALREADY_LINKED') {
+      return res.status(409).json({ error: 'That page is already linked to another level' });
+    }
+    throw e;
+  }
+});
+
 api.get('/pages/:id/link-targets', (req, res) => {
   res.json(repository.linkTargets(req.params.id));
 });

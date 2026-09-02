@@ -57,6 +57,20 @@ export function useHierarchy() {
     [refresh],
   );
 
+  const availablePages = useCallback(
+    (nodeId: string) => api.availableHierarchyPages(nodeId),
+    [],
+  );
+
+  const assignPage = useCallback(
+    async (nodeId: string, pageId: string | null) => {
+      const updated = await api.assignHierarchyNodePage(nodeId, pageId);
+      await refresh();
+      return updated;
+    },
+    [refresh],
+  );
+
   return {
     nodes,
     loading,
@@ -66,5 +80,7 @@ export function useHierarchy() {
     renameNode,
     moveNode,
     deleteNode,
+    availablePages,
+    assignPage,
   };
 }

@@ -25,7 +25,9 @@ db.exec(`
     name       TEXT NOT NULL,
     parent_id  TEXT,
     "order"    INTEGER DEFAULT 0,
-    FOREIGN KEY (parent_id) REFERENCES hierarchy_nodes(id) ON DELETE SET NULL
+    page_id    TEXT,
+    FOREIGN KEY (parent_id) REFERENCES hierarchy_nodes(id) ON DELETE SET NULL,
+    FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE SET NULL
   );
 
   CREATE TABLE IF NOT EXISTS rows (
@@ -88,6 +90,16 @@ db.exec(`
     created_at TEXT NOT NULL
   );
 `);
+
+// Migration: add page_id column to hierarchy_nodes if missing.
+const hasNodePageId = db
+  .prepare('PRAGMA table_info(hierarchy_nodes)')
+  .all()
+  .some((col: any) => col.name === 'page_id');
+if (!hasNodePageId) {
+  db.exec('ALTER TABLE hierarchy_nodes ADD COLUMN page_id TEXT');
+}
+db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_hierarchy_nodes_page_id ON hierarchy_nodes(page_id) WHERE page_id IS NOT NULL');
 
 // Migration: add global_template_id column to fields if missing.
 const hasGlobalTemplateId = db

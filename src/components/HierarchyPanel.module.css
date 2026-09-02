@@ -582,6 +582,116 @@
   color: var(--accent);
 }
 
+.goPagesBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgba(47, 109, 246, 0.25);
+  background: rgba(47, 109, 246, 0.06);
+  color: var(--accent);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.goPagesBtn:hover {
+  background: rgba(47, 109, 246, 0.14);
+  border-color: var(--accent);
+}
+
+.pageLinkWrap {
+  position: relative;
+}
+
+.pageLinkMenu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  min-width: 220px;
+  max-height: 260px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 4px 8px -4px rgba(0, 0, 0, 0.08);
+  z-index: 50;
+  padding: 6px;
+}
+
+.pageLinkTitle {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  padding: 4px 8px 6px;
+}
+
+.pageLinkEmpty {
+  padding: 10px 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.pageLinkOption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s ease;
+}
+
+.pageLinkOption:hover {
+  background: #f1f5f9;
+}
+
+.pageLinkOption small {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.unlinkPageBtn {
+  width: 100%;
+  margin-top: 4px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #dc2626;
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.unlinkPageBtn:hover {
+  background: #fee2e2;
+}
+
+.linkedPageBadge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #15803d;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
 .addBtn {
   display: inline-flex;
   align-items: center;

@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { HierarchyNode } from '../types';
+import type { HierarchyNode, PageSummary } from '../types';
 import { buildHierarchyTree, type HierarchyTreeNode } from '../hooks/tree';
 import styles from './HierarchyPanel.module.css';
 
 interface Props {
   nodes: HierarchyNode[];
+  pages: PageSummary[];
   onRename: (id: string, name: string) => Promise<void>;
   onMove: (id: string, patch: { parentId?: string | null; order?: number }) => Promise<void>;
   onCreate: (name: string, parentId: string | null) => Promise<{ id: string }>;
   onDelete: (id: string) => Promise<void>;
+  availablePages: (nodeId: string) => Promise<PageSummary[]>;
+  onAssignPage: (nodeId: string, pageId: string | null) => Promise<HierarchyNode>;
 }
 
 interface AddingState {
@@ -17,7 +20,7 @@ interface AddingState {
   depth: number;
 }
 
-export function HierarchyPanel({ nodes, onRename, onMove, onCreate, onDelete }: Props) {
+export function HierarchyPanel({ nodes, pages, onRename, onMove, onCreate, onDelete, availablePages, onAssignPage }: Props) {
   const [addingUnder, setAddingUnder] = useState<AddingState | null>(null);
   const [newChildName, setNewChildName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
@@ -30,10 +33,65 @@ export function HierarchyPanel({ nodes, onRename, onMove, onCreate, onDelete }: 
   const [searchQuery, setSearchQuery] = useState('');
   const [error, setError] = useState<string | null>(null);
 
+  // Page-linking dropdown per node.
+  const [linkOpenId, setLinkOpenId] = useState<string | null>(null);
+  const [available, setAvailable] = useState<PageSummary[]>([]);
+  const [loadingPages, setLoadingPages] = useState(false);
+
   const addInputRef = useRef<HTMLInputElement>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
+  const linkRef = useRef<HTMLDivElement>(null);
 
   const tree = useMemo(() => buildHierarchyTree(nodes), [nodes]);
+
+  // Close the page-link dropdown when clicking outside.
+  useEffect(() => {
+    if (!linkOpenId) return;
+    const handler = (e: MouseEvent) => {
+      if (linkRef.current && !linkRef.current.contains(e.target as Node)) {
+        setLinkOpenId(null);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [linkOpenId]);
+
+  const toggleLinkDropdown = async (nodeId: string) => {
+    if (linkOpenId === nodeId) {
+      setLinkOpenId(null);
+      return;
+    }
+    setLinkOpenId(nodeId);
+    setLoadingPages(true);
+    setError(null);
+    try {
+      setAvailable(await availablePages(nodeId));
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoadingPages(false);
+    }
+  };
+
+  const handleLinkPage = async (nodeId: string, pageId: string) => {
+    setError(null);
+    try {
+      await onAssignPage(nodeId, pageId);
+      setLinkOpenId(null);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  };
+
+  const handleUnlink = async (nodeId: string) => {
+    setError(null);
+    try {
+      await onAssignPage(nodeId, null);
+      setLinkOpenId(null);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  };
 
   useEffect(() => {
     if (addingUnder) {
@@ -306,6 +364,11 @@ export function HierarchyPanel({ nodes, onRename, onMove, onCreate, onDelete }: 
               >
                 <span className={styles.pageName}>{node.node.name}</span>
                 <span className={styles.levelBadge}>Level {depth}</span>
+                {node.node.pageId && (
+                  <span className={styles.linkedPageBadge}>
+                    Page: {pages.find((p) => p.id === node.node.pageId)?.name ?? 'Linked'}
+                  </span>
+                )}
                 {hasChildren && (
                   <span className={styles.childCountBadge}>
                     {node.children.length} {node.children.length === 1 ? 'child' : 'children'}
@@ -368,6 +431,55 @@ export function HierarchyPanel({ nodes, onRename, onMove, onCreate, onDelete }: 
                 <path d="M21 13v2a4 4 0 0 1-4 4H3" />
               </svg>
             </button>
+
+            <div
+              className={styles.pageLinkWrap}
+              ref={linkOpenId === node.node.id ? linkRef : undefined}
+            >
+              <button
+                type="button"
+                className={styles.goPagesBtn}
+                onClick={() => toggleLinkDropdown(node.node.id)}
+                title={node.node.pageId ? 'Change linked page' : 'Link a page to this level'}
+              >
+                <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" strokeWidth="2" fill="none">
+                  <path d="M3 5h18v14H3z" />
+                  <path d="M7 9h10M7 13h6" />
+                </svg>
+                <span>{node.node.pageId ? 'Change Page' : 'Link Page'}</span>
+              </button>
+              {linkOpenId === node.node.id && (
+                <div className={styles.pageLinkMenu}>
+                  <div className={styles.pageLinkTitle}>Link a page</div>
+                  {loadingPages ? (
+                    <div className={styles.pageLinkEmpty}>Loading pages…</div>
+                  ) : available.length === 0 ? (
+                    <div className={styles.pageLinkEmpty}>No unlinked pages available.</div>
+                  ) : (
+                    available.map((page) => (
+                      <button
+                        key={page.id}
+                        type="button"
+                        className={styles.pageLinkOption}
+                        onClick={() => handleLinkPage(node.node.id, page.id)}
+                      >
+                        <span>{page.name}</span>
+                        <small>/{page.slug}</small>
+                      </button>
+                    ))
+                  )}
+                  {node.node.pageId && (
+                    <button
+                      type="button"
+                      className={styles.unlinkPageBtn}
+                      onClick={() => handleUnlink(node.node.id)}
+                    >
+                      Unlink current page
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
 
             <button
               type="button"

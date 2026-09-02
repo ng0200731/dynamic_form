@@ -89,4 +89,5 @@ export interface HierarchyNode {
   name: string;
   parentId: string | null;
   order: number;
+  pageId: string | null;
 }

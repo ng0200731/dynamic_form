@@ -86,6 +86,7 @@ export interface HierarchyNode {
   name: string;
   parentId: string | null;
   order: number;
+  pageId: string | null;
 }
 
 export const FIELD_TYPES: { value: FieldType; label: string }[] = [

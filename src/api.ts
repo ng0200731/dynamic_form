@@ -59,6 +59,13 @@ export const api = {
     }),
   deleteHierarchyNode: (id: string) =>
     request<void>(`/hierarchy/${id}`, { method: 'DELETE' }),
+  availableHierarchyPages: (nodeId: string) =>
+    request<PageSummary[]>(`/hierarchy/${nodeId}/available-pages`),
+  assignHierarchyNodePage: (nodeId: string, pageId: string | null) =>
+    request<HierarchyNode>(`/hierarchy/${nodeId}/page`, {
+      method: 'PUT',
+      body: JSON.stringify({ pageId }),
+    }),
   optionLists: {
     list: (pageId: string) => request<OptionList[]>(`/pages/${pageId}/option-lists`),
     create: (pageId: string, name: string) =>
