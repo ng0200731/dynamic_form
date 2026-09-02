@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import type { PageSummary } from '../types';
+import type { HierarchyNode, PageSummary } from '../types';
 import { CreatePageDialog } from './CreatePageDialog';
 import { GlobalTemplateDialog } from './GlobalTemplateDialog';
-import { PageTree } from './PageTree';
+import { HierarchyNavTree } from './HierarchyNavTree';
 import styles from './Sidebar.module.css';
 
 interface Props {
   pages: PageSummary[];
+  hierarchyNodes: HierarchyNode[];
   onCreate: (name: string, parentId: string | null) => Promise<{ id: string }>;
   mode: 'edit' | 'lists' | 'preview' | 'global' | 'pages' | 'hierarchy';
   onModeChange: (m: 'edit' | 'lists' | 'preview' | 'global' | 'pages' | 'hierarchy') => void;
@@ -15,7 +16,7 @@ interface Props {
   selectedId?: string | null;
 }
 
-export function Sidebar({ pages, onCreate, mode, onModeChange, onGlobalSaved, onSelectPage, selectedId }: Props) {
+export function Sidebar({ pages, hierarchyNodes, onCreate, mode, onModeChange, onGlobalSaved, onSelectPage, selectedId }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [globalOpen, setGlobalOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(true);
@@ -95,8 +96,8 @@ export function Sidebar({ pages, onCreate, mode, onModeChange, onGlobalSaved, on
             </div>
           )}
 
-          {/* Live page navigation tree — driven by the hierarchy. */}
-          {pages.length > 0 && (
+          {/* Page navigation mirrors the independent hierarchy skeleton. */}
+          {hierarchyNodes.length > 0 && (
             <div className={styles.settingsGroup}>
               <button
                 className={styles.settingsBtn}
@@ -106,7 +107,13 @@ export function Sidebar({ pages, onCreate, mode, onModeChange, onGlobalSaved, on
                 <span className={styles.caret}>{pagesOpen ? '▾' : '▸'}</span>
                 Pages
               </button>
-              {pagesOpen && <PageTree pages={pages} selectedId={selectedId ?? null} onSelect={(id) => onSelectPage?.(id)} />}
+              {pagesOpen && (
+                <HierarchyNavTree
+                  nodes={hierarchyNodes}
+                  selectedId={selectedId ?? null}
+                  onSelect={(id) => onSelectPage?.(id)}
+                />
+              )}
             </div>
           )}
         </div>

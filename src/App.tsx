@@ -84,6 +84,7 @@ export function App() {
     <div className={styles.app}>
       <Sidebar
         pages={pages}
+        hierarchyNodes={hierarchy.nodes}
         onCreate={createPage}
         mode={mode}
         onModeChange={setMode}
