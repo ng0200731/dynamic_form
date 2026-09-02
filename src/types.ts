@@ -79,6 +79,15 @@ export interface PageSummary {
   order: number;
 }
 
+// A node in the structural skeleton. Independent from Page — no slug, no content.
+// Built/edited only through the Hierarchy panel.
+export interface HierarchyNode {
+  id: string;
+  name: string;
+  parentId: string | null;
+  order: number;
+}
+
 export const FIELD_TYPES: { value: FieldType; label: string }[] = [
   { value: 'input', label: 'Input' },
   { value: 'textarea', label: 'Textarea' },

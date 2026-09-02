@@ -20,6 +20,14 @@ db.exec(`
     FOREIGN KEY (parent_id) REFERENCES pages(id) ON DELETE SET NULL
   );
 
+  CREATE TABLE IF NOT EXISTS hierarchy_nodes (
+    id         TEXT PRIMARY KEY,
+    name       TEXT NOT NULL,
+    parent_id  TEXT,
+    "order"    INTEGER DEFAULT 0,
+    FOREIGN KEY (parent_id) REFERENCES hierarchy_nodes(id) ON DELETE SET NULL
+  );
+
   CREATE TABLE IF NOT EXISTS rows (
     id       TEXT PRIMARY KEY,
     page_id  TEXT NOT NULL,

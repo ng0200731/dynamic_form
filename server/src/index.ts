@@ -60,12 +60,68 @@ api.put('/pages/:id', (req, res) => {
 });
 
 api.delete('/pages/:id', (req, res) => {
+  // Cascade-delete: removes the page plus every descendant (rows/fields/option_lists follow via FK).
   const result = repository.deletePage(req.params.id);
-  if (!result.ok) {
-    if (result.reason === 'has_children') {
-      return res.status(409).json({ error: 'Cannot delete a page that has child pages' });
-    }
+  console.log(`[delete] removed ${result.deleted} page(s) (root ${req.params.id})`);
+  res.status(204).end();
+});
+
+// ---- Hierarchy (structural skeleton, independent from pages) --------------
+
+api.get('/hierarchy', (_req, res) => {
+  res.json(repository.listHierarchy());
+});
+
+api.post('/hierarchy', (req, res) => {
+  const name = String(req.body?.name ?? '').trim();
+  const rawParent = req.body?.parentId;
+  const parentId = rawParent && rawParent !== '' ? rawParent : null;
+  if (!name) return res.status(400).json({ error: 'Name is required' });
+  try {
+    const node = repository.createHierarchyNode(name, parentId);
+    res.status(201).json(node);
+  } catch (e) {
+    const code = (e as { code?: string }).code;
+    if (code === 'PARENT_NOT_FOUND') return res.status(404).json({ error: 'Parent not found' });
+    if (code === 'NAME_REQUIRED') return res.status(400).json({ error: 'Name is required' });
+    throw e;
   }
+});
+
+api.put('/hierarchy/:id', (req, res) => {
+  const { name, parentId, order } = req.body ?? {};
+  try {
+    const movePatch: { parentId?: string | null; order?: number } = {};
+    if (parentId !== undefined) {
+      movePatch.parentId = parentId && parentId !== '' ? parentId : null;
+    }
+    if (order !== undefined) movePatch.order = Number(order);
+    if (Object.keys(movePatch).length > 0) {
+      repository.moveHierarchyNode(req.params.id, movePatch);
+    }
+    if (name !== undefined) {
+      const trimmed = String(name).trim();
+      if (!trimmed) return res.status(400).json({ error: 'Name is required' });
+      repository.renameHierarchyNode(req.params.id, trimmed);
+    }
+    const node = repository.getHierarchyNode(req.params.id);
+    if (!node) return res.status(404).json({ error: 'Node not found' });
+    res.json(node);
+  } catch (e) {
+    const code = (e as { code?: string }).code;
+    if (code === 'NOT_FOUND') return res.status(404).json({ error: 'Node not found' });
+    if (code === 'PARENT_NOT_FOUND') return res.status(404).json({ error: 'Parent not found' });
+    if (code === 'NAME_REQUIRED') return res.status(400).json({ error: 'Name is required' });
+    if (code === 'CYCLE') {
+      return res.status(409).json({ error: 'Move would create a cycle in the skeleton' });
+    }
+    throw e;
+  }
+});
+
+api.delete('/hierarchy/:id', (req, res) => {
+  const result = repository.deleteHierarchyNode(req.params.id);
+  console.log(`[hierarchy delete] removed ${result.deleted} node(s) (root ${req.params.id})`);
   res.status(204).end();
 });
 

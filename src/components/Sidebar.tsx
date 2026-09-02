@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { PageSummary } from '../types';
 import { CreatePageDialog } from './CreatePageDialog';
 import { GlobalTemplateDialog } from './GlobalTemplateDialog';
+import { PageTree } from './PageTree';
 import styles from './Sidebar.module.css';
 
 interface Props {
@@ -10,14 +11,17 @@ interface Props {
   mode: 'edit' | 'lists' | 'preview' | 'global' | 'pages' | 'hierarchy';
   onModeChange: (m: 'edit' | 'lists' | 'preview' | 'global' | 'pages' | 'hierarchy') => void;
   onGlobalSaved?: () => void;
+  onSelectPage?: (id: string) => void;
+  selectedId?: string | null;
 }
 
-export function Sidebar({ pages, onCreate, mode, onModeChange, onGlobalSaved }: Props) {
+export function Sidebar({ pages, onCreate, mode, onModeChange, onGlobalSaved, onSelectPage, selectedId }: Props) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [globalOpen, setGlobalOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [pageOpen, setPageOpen] = useState(true);
   const [optionOpen, setOptionOpen] = useState(true);
+  const [pagesOpen, setPagesOpen] = useState(true);
 
   return (
     <aside className={styles.sidebar}>
@@ -88,6 +92,21 @@ export function Sidebar({ pages, onCreate, mode, onModeChange, onGlobalSaved }: 
               >
                 Hierarchy
               </button>
+            </div>
+          )}
+
+          {/* Live page navigation tree — driven by the hierarchy. */}
+          {pages.length > 0 && (
+            <div className={styles.settingsGroup}>
+              <button
+                className={styles.settingsBtn}
+                onClick={() => setPagesOpen((o) => !o)}
+                aria-expanded={pagesOpen}
+              >
+                <span className={styles.caret}>{pagesOpen ? '▾' : '▸'}</span>
+                Pages
+              </button>
+              {pagesOpen && <PageTree pages={pages} selectedId={selectedId ?? null} onSelect={(id) => onSelectPage?.(id)} />}
             </div>
           )}
         </div>

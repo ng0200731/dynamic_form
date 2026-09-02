@@ -1,152 +1,633 @@
-import { useCallback, useEffect, useState } from 'react';
-import type { PageSummary } from '../types';
-import { api } from '../api';
-import styles from './OptionListsPanel.module.css';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { HierarchyNode } from '../types';
+import { buildHierarchyTree, type HierarchyTreeNode } from '../hooks/tree';
+import styles from './HierarchyPanel.module.css';
 
 interface Props {
-  onChanged: (id: string) => void;
+  nodes: HierarchyNode[];
+  onRename: (id: string, name: string) => Promise<void>;
+  onMove: (id: string, patch: { parentId?: string | null; order?: number }) => Promise<void>;
+  onCreate: (name: string, parentId: string | null) => Promise<{ id: string }>;
+  onDelete: (id: string) => Promise<void>;
 }
 
-interface LevelNode {
-  level: number;
-  page: PageSummary;
-  children: LevelNode[];
+interface AddingState {
+  parentId: string | null;
+  parentName: string;
+  depth: number;
 }
 
-// Flatten the tree into a list grouped by depth level (level 1, 2, … N).
-function toLevels(roots: LevelNode[], out: LevelNode[][] = []): LevelNode[][] {
-  const walk = (nodes: LevelNode[]) => {
-    nodes.forEach((n) => {
-      (out[n.level - 1] ||= []).push(n);
-      walk(n.children);
+export function HierarchyPanel({ nodes, onRename, onMove, onCreate, onDelete }: Props) {
+  const [addingUnder, setAddingUnder] = useState<AddingState | null>(null);
+  const [newChildName, setNewChildName] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
+  const [isRenaming, setIsRenaming] = useState(false);
+
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  const addInputRef = useRef<HTMLInputElement>(null);
+  const editInputRef = useRef<HTMLInputElement>(null);
+
+  const tree = useMemo(() => buildHierarchyTree(nodes), [nodes]);
+
+  useEffect(() => {
+    if (addingUnder) {
+      setTimeout(() => {
+        addInputRef.current?.focus();
+      }, 50);
+    }
+  }, [addingUnder]);
+
+  useEffect(() => {
+    if (editingId) {
+      setTimeout(() => {
+        editInputRef.current?.focus();
+        editInputRef.current?.select();
+      }, 50);
+    }
+  }, [editingId]);
+
+  const toggleCollapse = (id: string) => {
+    setCollapsedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
     });
   };
-  walk(roots);
-  return out;
-}
 
-export function HierarchyPanel({ onChanged }: Props) {
-  const [pages, setPages] = useState<PageSummary[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [parentMap, setParentMap] = useState<Record<string, string | null>>({});
-
-  const reload = useCallback(() => {
-    setLoading(true);
-    api
-      .listPages()
-      .then((list) => {
-        setPages(list);
-        const map: Record<string, string | null> = {};
-        list.forEach((p) => (map[p.id] = p.parentId));
-        setParentMap(map);
-      })
-      .catch((e) => setError((e as Error).message))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(reload, [reload]);
-
-  // Build level groups (level 1 = roots, level 2 = children of level 1, … N).
-  const levels = (() => {
-    const byId = new Map<string, LevelNode>();
-    pages.forEach((p) => byId.set(p.id, { level: 1, page: p, children: [] }));
-    const roots: LevelNode[] = [];
-    pages.forEach((p) => {
-      const node = byId.get(p.id)!;
-      if (p.parentId && byId.has(p.parentId)) {
-        byId.get(p.parentId)!.children.push(node);
-      } else {
-        roots.push(node);
-      }
-    });
-    // Assign levels via BFS.
-    const queue: LevelNode[] = [...roots];
-    while (queue.length) {
-      const n = queue.shift()!;
-      n.children.forEach((c) => {
-        c.level = n.level + 1;
-        queue.push(c);
+  const expandAll = () => setCollapsedIds(new Set());
+  const collapseAll = () => {
+    const allParentIds = new Set<string>();
+    const collect = (arr: HierarchyTreeNode[]) => {
+      arr.forEach((n) => {
+        if (n.children.length > 0) {
+          allParentIds.add(n.node.id);
+          collect(n.children);
+        }
       });
-    }
-    const sortRec = (nodes: LevelNode[]) => {
-      nodes.sort((a, b) => a.page.order - b.page.order);
-      nodes.forEach((n) => sortRec(n.children));
     };
-    sortRec(roots);
-    return toLevels(roots);
-  })();
+    collect(tree);
+    setCollapsedIds(allParentIds);
+  };
 
-  const setParent = async (id: string, parentId: string | null) => {
+  const startAddChild = (parentId: string | null, parentName: string, depth: number) => {
+    setError(null);
+    setAddingUnder({ parentId, parentName, depth });
+    setNewChildName('');
+  };
+
+  const cancelAddChild = () => {
+    setAddingUnder(null);
+    setNewChildName('');
+  };
+
+  const handleCreateChild = async () => {
+    const name = newChildName.trim();
+    if (!name) {
+      setError('Please enter a name.');
+      return;
+    }
+    setError(null);
+    setIsCreating(true);
+    try {
+      await onCreate(name, addingUnder ? addingUnder.parentId : null);
+      setAddingUnder(null);
+      setNewChildName('');
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const startRename = (node: HierarchyNode) => {
+    setError(null);
+    setEditingId(node.id);
+    setEditingName(node.name);
+  };
+
+  const cancelRename = () => {
+    setEditingId(null);
+    setEditingName('');
+  };
+
+  const handleCommitRename = async (id: string) => {
+    const name = editingName.trim();
+    if (!name) {
+      cancelRename();
+      return;
+    }
+    const node = nodes.find((n) => n.id === id);
+    if (node && node.name === name) {
+      cancelRename();
+      return;
+    }
+    setError(null);
+    setIsRenaming(true);
+    try {
+      await onRename(id, name);
+      setEditingId(null);
+      setEditingName('');
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setIsRenaming(false);
+    }
+  };
+
+  const handleReorder = async (
+    siblings: HierarchyTreeNode[],
+    index: number,
+    direction: -1 | 1,
+  ) => {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= siblings.length) return;
     setError(null);
     try {
-      await api.updatePage(id, { parentId });
-      reload();
-      onChanged(id);
+      const current = siblings[index].node;
+      const target = siblings[targetIndex].node;
+      await onMove(current.id, { order: target.order });
+      await onMove(target.id, { order: current.order });
     } catch (e) {
       setError((e as Error).message);
     }
   };
 
+  const handleDelete = async (node: HierarchyNode) => {
+    setError(null);
+    if (!confirm(`Delete "${node.name}" and all its children from the skeleton?`)) return;
+    try {
+      await onDelete(node.id);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  };
+
+  const startReparent = (node: HierarchyNode) => {
+    setError(null);
+    const choice = prompt(
+      `Move "${node.name}" under which node?\n\n` +
+        `• Type a node's exact name to set as new parent\n` +
+        `• Type "/" (or leave empty) to move to root (Level 1)\n` +
+        `• Press Cancel to abort\n\n` +
+        `Available nodes:\n` +
+        nodes
+          .filter((n) => n.id !== node.id)
+          .map((n) => `  - ${n.name}`)
+          .join('\n'),
+    );
+    if (choice === null) return;
+    const trimmed = choice.trim();
+    let parentId: string | null;
+    if (trimmed === '' || trimmed === '/') {
+      parentId = null;
+    } else {
+      const target = nodes.find((n) => n.name === trimmed);
+      if (!target) {
+        setError(`No node named "${trimmed}"`);
+        return;
+      }
+      parentId = target.id;
+    }
+    const maxOrder = nodes
+      .filter((n) => (parentId ? n.parentId === parentId : !n.parentId))
+      .reduce((m, p) => Math.max(m, p.order), -1);
+    onMove(node.id, { parentId, order: maxOrder + 1 }).catch((e) =>
+      setError((e as Error).message),
+    );
+  };
+
+  const matchesSearch = (node: HierarchyTreeNode): boolean => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    if (node.node.name.toLowerCase().includes(q)) return true;
+    return node.children.some(matchesSearch);
+  };
+
+  const renderTreeNode = (
+    node: HierarchyTreeNode,
+    depth: number,
+    index: number,
+    siblings: HierarchyTreeNode[],
+  ) => {
+    if (!matchesSearch(node)) return null;
+
+    const isEditing = editingId === node.node.id;
+    const isAddingHere = addingUnder?.parentId === node.node.id;
+    const isCollapsed = collapsedIds.has(node.node.id);
+    const hasChildren = node.children.length > 0;
+    const dashes = '-'.repeat(depth);
+
+    return (
+      <div key={node.node.id} className={styles.treeBranch}>
+        <div
+          className={styles.treeRow}
+          style={{ paddingLeft: `${(depth - 1) * 28 + 12}px` }}
+        >
+          <div className={styles.guideWrapper}>
+            {Array.from({ length: depth - 1 }).map((_, i) => (
+              <span key={i} className={styles.guideLine} style={{ left: `${i * 28 + 20}px` }} />
+            ))}
+          </div>
+
+          <div className={styles.dashPrefix} title={`Level ${depth}`}>
+            <span className={styles.dashText}>{dashes}</span>
+          </div>
+
+          {hasChildren ? (
+            <button
+              type="button"
+              className={styles.caretBtn}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleCollapse(node.node.id);
+              }}
+              title={isCollapsed ? 'Expand children' : 'Collapse children'}
+            >
+              <svg
+                className={`${styles.caretIcon} ${isCollapsed ? styles.caretCollapsed : ''}`}
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                fill="none"
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+          ) : (
+            <span className={styles.caretPlaceholder} />
+          )}
+
+          <div className={styles.nameArea}>
+            {isEditing ? (
+              <div className={styles.inlineEditForm}>
+                <input
+                  ref={editInputRef}
+                  type="text"
+                  className={styles.renameInput}
+                  value={editingName}
+                  disabled={isRenaming}
+                  onChange={(e) => setEditingName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleCommitRename(node.node.id);
+                    if (e.key === 'Escape') cancelRename();
+                  }}
+                />
+                <button
+                  type="button"
+                  className={styles.inlineSaveBtn}
+                  onClick={() => handleCommitRename(node.node.id)}
+                  disabled={isRenaming}
+                >
+                  Save
+                </button>
+                <button
+                  type="button"
+                  className={styles.inlineCancelBtn}
+                  onClick={cancelRename}
+                  disabled={isRenaming}
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <div
+                className={styles.nameDisplay}
+                onDoubleClick={() => startRename(node.node)}
+                title="Double-click to rename"
+              >
+                <span className={styles.pageName}>{node.node.name}</span>
+                <span className={styles.levelBadge}>Level {depth}</span>
+                {hasChildren && (
+                  <span className={styles.childCountBadge}>
+                    {node.children.length} {node.children.length === 1 ? 'child' : 'children'}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className={styles.actionsBar}>
+            <div className={styles.reorderGroup}>
+              <button
+                type="button"
+                className={styles.reorderBtn}
+                disabled={index === 0}
+                onClick={() => handleReorder(siblings, index, -1)}
+                title="Move Up"
+              >
+                <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" strokeWidth="2.5" fill="none">
+                  <path d="M18 15l-6-6-6 6" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className={styles.reorderBtn}
+                disabled={index === siblings.length - 1}
+                onClick={() => handleReorder(siblings, index, 1)}
+                title="Move Down"
+              >
+                <svg viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" strokeWidth="2.5" fill="none">
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
+            </div>
+
+            {!isEditing && (
+              <button
+                type="button"
+                className={styles.actionIconBtn}
+                onClick={() => startRename(node.node)}
+                title="Rename"
+              >
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+              </button>
+            )}
+
+            <button
+              type="button"
+              className={styles.actionIconBtn}
+              onClick={() => startReparent(node.node)}
+              title="Move to a different parent"
+            >
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none">
+                <polyline points="17 1 21 5 17 9" />
+                <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                <polyline points="7 23 3 19 7 15" />
+                <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+              </svg>
+            </button>
+
+            <button
+              type="button"
+              className={styles.addBtn}
+              onClick={() => startAddChild(node.node.id, node.node.name, depth + 1)}
+              title={`Add Level ${depth + 1} child under "${node.node.name}"`}
+            >
+              <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" strokeWidth="3" fill="none">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <span>+</span>
+            </button>
+
+            <button
+              type="button"
+              className={styles.delBtn}
+              onClick={() => handleDelete(node.node)}
+              title={`Delete "${node.node.name}"`}
+            >
+              <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" strokeWidth="3" fill="none">
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <span>-</span>
+            </button>
+          </div>
+        </div>
+
+        {isAddingHere && (
+          <div
+            className={styles.inlineAddRow}
+            style={{ paddingLeft: `${depth * 28 + 12}px` }}
+          >
+            <div className={styles.dashPrefix}>
+              <span className={styles.dashText}>{'-'.repeat(depth + 1)}</span>
+            </div>
+            <div className={styles.inlineAddForm}>
+              <input
+                ref={addInputRef}
+                type="text"
+                className={styles.inlineAddInput}
+                placeholder={`New Level ${depth + 1} name under "${node.node.name}"...`}
+                value={newChildName}
+                disabled={isCreating}
+                onChange={(e) => setNewChildName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleCreateChild();
+                  if (e.key === 'Escape') cancelAddChild();
+                }}
+              />
+              <button
+                type="button"
+                className={styles.inlineAddSubmitBtn}
+                onClick={handleCreateChild}
+                disabled={isCreating}
+              >
+                {isCreating ? 'Creating…' : `+ Add Level ${depth + 1}`}
+              </button>
+              <button
+                type="button"
+                className={styles.inlineCancelBtn}
+                onClick={cancelAddChild}
+                disabled={isCreating}
+                title="Cancel"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        )}
+
+        {hasChildren && !isCollapsed && (
+          <div className={styles.childrenContainer}>
+            {node.children.map((child, cIdx) =>
+              renderTreeNode(child, depth + 1, cIdx, node.children),
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className={styles.panel}>
-      <h2 className={styles.title}>Hierarchy</h2>
-      <p className={styles.sub}>
-        Drag-free editing of the page tree. Each level shows pages at that depth. Change a page's
-        parent to move it up or down a level. <em>Settings</em> is dimmed because it is fixed.
-      </p>
+      <div className={styles.header}>
+        <div className={styles.headerInfo}>
+          <div className={styles.titleRow}>
+            <div className={styles.iconCircle}>
+              <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none">
+                <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                <rect x="3" y="14" width="7" height="7" rx="1.5" />
+              </svg>
+            </div>
+            <div>
+              <h2 className={styles.title}>Hierarchy</h2>
+              <p className={styles.sub}>
+                Build the app skeleton. Skeleton nodes are independent from pages —
+                pages live in Page View only.
+              </p>
+            </div>
+          </div>
+        </div>
 
-      {error && <div className={styles.error}>{error}</div>}
-      {loading && <p className={styles.empty}>Loading…</p>}
-      {!loading && levels.length === 0 && (
-        <p className={styles.empty}>No pages yet. Create one from Settings → Page Create.</p>
+        <div className={styles.controlsBar}>
+          <div className={styles.searchBox}>
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="text"
+              className={styles.searchInput}
+              placeholder="Search skeleton nodes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                className={styles.clearSearchBtn}
+                onClick={() => setSearchQuery('')}
+                title="Clear search"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          <div className={styles.statsAndToggles}>
+            <span className={styles.statChip}>
+              {nodes.length} {nodes.length === 1 ? 'node' : 'nodes'}
+            </span>
+            <button
+              type="button"
+              className={styles.toggleBtn}
+              onClick={expandAll}
+              title="Expand all levels"
+            >
+              Expand All
+            </button>
+            <button
+              type="button"
+              className={styles.toggleBtn}
+              onClick={collapseAll}
+              title="Collapse all sub-levels"
+            >
+              Collapse All
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {error && (
+        <div className={styles.errorBanner}>
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <span>{error}</span>
+          <button type="button" className={styles.dismissErrBtn} onClick={() => setError(null)}>
+            ✕
+          </button>
+        </div>
       )}
 
-      {levels.map((nodes, i) => (
-        <div key={i} className={styles.box}>
-          <div className={styles.boxHead}>
-            <span className={styles.boxName}>Level {i + 1}</span>
-            <span className={styles.tag}>
-              {nodes.length} page{nodes.length === 1 ? '' : 's'}
-            </span>
-          </div>
-          <ul className={styles.optList}>
-            {nodes.map((n) => (
-              <li key={n.page.id}>
-                <span className={styles.optVal} style={{ fontWeight: 500 }}>
-                  {n.page.name}
-                </span>
-                <select
-                  value={parentMap[n.page.id] ?? ''}
-                  onChange={(e) => setParent(n.page.id, e.target.value || null)}
-                  style={{
-                    marginLeft: 'auto',
-                    padding: '4px 8px',
-                    border: '1px solid var(--border)',
-                    borderRadius: 6,
-                    background: '#fff',
-                  }}
-                >
-                  <option value="">— root —</option>
-                  {pages
-                    .filter((p) => p.id !== n.page.id)
-                    .map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                </select>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
+      <div className={styles.treeCard}>
+        <div className={styles.rootBox}>
+          <div className={styles.rootHeader}>
+            <div className={styles.rootInfo}>
+              <div className={styles.rootIcon}>
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2" fill="none">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                </svg>
+              </div>
+              <span className={styles.rootTitle}>Root</span>
+              <span className={styles.rootSubtitle}>(Base Level)</span>
+            </div>
 
-      <p className={styles.sub} style={{ marginTop: 16 }}>
-        Levels are derived automatically from parent relationships: a page with no parent is Level 1,
-        a child of a Level 1 page is Level 2, and so on. To add a new level, create a page and set its
-        parent to a page in the current deepest level.
-      </p>
+            <div className={styles.rootActions}>
+              <button
+                type="button"
+                className={styles.rootAddBtn}
+                onClick={() => startAddChild(null, 'Root', 1)}
+                title="Create Level 1 skeleton node"
+              >
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="3" fill="none">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                <span>(+) Add Level 1</span>
+              </button>
+            </div>
+          </div>
+
+          {addingUnder?.parentId === null && (
+            <div className={styles.rootInlineAddRow}>
+              <div className={styles.dashPrefix}>
+                <span className={styles.dashText}>-</span>
+              </div>
+              <div className={styles.inlineAddForm}>
+                <input
+                  ref={addInputRef}
+                  type="text"
+                  className={styles.inlineAddInput}
+                  placeholder="Enter Level 1 node name..."
+                  value={newChildName}
+                  disabled={isCreating}
+                  onChange={(e) => setNewChildName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleCreateChild();
+                    if (e.key === 'Escape') cancelAddChild();
+                  }}
+                />
+                <button
+                  type="button"
+                  className={styles.inlineAddSubmitBtn}
+                  onClick={handleCreateChild}
+                  disabled={isCreating}
+                >
+                  {isCreating ? 'Creating…' : '+ Add Level 1'}
+                </button>
+                <button
+                  type="button"
+                  className={styles.inlineCancelBtn}
+                  onClick={cancelAddChild}
+                  disabled={isCreating}
+                  title="Cancel"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className={styles.treeList}>
+          {tree.length === 0 ? (
+            <div className={styles.emptyState}>
+              <div className={styles.emptyIcon}>
+                <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" strokeWidth="1.5" fill="none">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="12" y1="18" x2="12" y2="12" />
+                  <line x1="9" y1="15" x2="15" y2="15" />
+                </svg>
+              </div>
+              <p className={styles.emptyTitle}>No skeleton nodes yet</p>
+              <p className={styles.emptyDesc}>
+                Click the <strong>(+) Add Level 1</strong> button on Root above to add your first
+                top-level skeleton node.
+              </p>
+            </div>
+          ) : (
+            tree.map((rootNode, rIdx) => renderTreeNode(rootNode, 1, rIdx, tree))
+          )}
+        </div>
+      </div>
     </div>
   );
 }

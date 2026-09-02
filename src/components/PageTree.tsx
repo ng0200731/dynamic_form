@@ -33,5 +33,9 @@ export function PageTree({ pages, selectedId, onSelect }: Props) {
     return <p className={styles.empty}>No pages yet. Create one to get started.</p>;
   }
 
-  return <ul className={styles.tree}>{tree.map((n) => renderNode(n, 0))}</ul>;
+  return (
+    <ul className={styles.tree} style={{ marginTop: 4 }}>
+      {tree.map((n) => renderNode(n, 0))}
+    </ul>
+  );
 }

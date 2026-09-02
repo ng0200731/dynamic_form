@@ -7,6 +7,7 @@ import type {
   Field,
   OptionList,
   GlobalTemplate,
+  HierarchyNode,
   LinkAction,
   LinkOpenIn,
 } from './types.js';
@@ -60,6 +61,13 @@ interface OptionListRow {
   name: string;
   position: number;
   options: string;
+}
+
+interface HierarchyNodeRow {
+  id: string;
+  name: string;
+  parent_id: string | null;
+  order: number;
 }
 
 function mapGlobalTemplate(r: GlobalTemplateRow): GlobalTemplate {
@@ -462,11 +470,34 @@ export const repository = {
     return updated;
   },
 
-  deletePage(id: string): { ok: true } | { ok: false; reason: 'has_children' } {
-    const child = db.prepare('SELECT 1 FROM pages WHERE parent_id = ? LIMIT 1').get(id);
-    if (child) return { ok: false, reason: 'has_children' };
-    db.prepare('DELETE FROM pages WHERE id = ?').run(id);
-    return { ok: true };
+  deletePage(id: string): { ok: true; deleted: number } {
+    // Collect the target plus every descendant, guarding against parent_id cycles.
+    // Rows/fields/option_lists cascade-delete through their FKs.
+    // Order doesn't matter — pages.parent_id uses ON DELETE SET NULL (we explicitly
+    // delete every member of the set, so the SET NULL never surfaces).
+    const seen = new Set<string>();
+    const queue: string[] = [id];
+    while (queue.length > 0) {
+      const cur = queue.shift()!;
+      if (seen.has(cur)) continue;
+      seen.add(cur);
+      const kids = db.prepare('SELECT id FROM pages WHERE parent_id = ?').all(cur) as { id: string }[];
+      for (const k of kids) queue.push(k.id);
+    }
+    const ids = Array.from(seen);
+
+    if (ids.length === 0) return { ok: true, deleted: 0 };
+
+    db.exec('BEGIN');
+    try {
+      const placeholders = ids.map(() => '?').join(',');
+      db.prepare(`DELETE FROM pages WHERE id IN (${placeholders})`).run(...ids);
+      db.exec('COMMIT');
+    } catch (e) {
+      db.exec('ROLLBACK');
+      throw e;
+    }
+    return { ok: true, deleted: ids.length };
   },
 
   // Pages available as link targets: every page except the given one.
@@ -477,5 +508,162 @@ export const repository = {
       )
       .all(excludeId) as PageRow[];
     return rows.map(mapPage);
+  },
+
+  // ---- Hierarchy (structural skeleton, separate from pages) ---------------
+
+  listHierarchy(): HierarchyNode[] {
+    const rows = db
+      .prepare('SELECT id, name, parent_id, "order" FROM hierarchy_nodes ORDER BY "order"')
+      .all() as HierarchyNodeRow[];
+    return rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      parentId: r.parent_id,
+      order: r.order,
+    }));
+  },
+
+  createHierarchyNode(name: string, parentId: string | null): HierarchyNode {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      const err = new Error('NAME_REQUIRED') as Error & { code?: string };
+      err.code = 'NAME_REQUIRED';
+      throw err;
+    }
+    if (parentId !== null) {
+      const exists = db.prepare('SELECT 1 FROM hierarchy_nodes WHERE id = ?').get(parentId);
+      if (!exists) {
+        const err = new Error('PARENT_NOT_FOUND') as Error & { code?: string };
+        err.code = 'PARENT_NOT_FOUND';
+        throw err;
+      }
+    }
+    const id = generateId();
+    const maxOrder = db
+      .prepare(
+        `SELECT COALESCE(MAX("order"), -1) AS m FROM hierarchy_nodes WHERE ${
+          parentId === null ? 'parent_id IS NULL' : 'parent_id = ?'
+        }`,
+      )
+      .get(...(parentId === null ? [] : [parentId])) as { m: number };
+    db.prepare(
+      'INSERT INTO hierarchy_nodes (id, name, parent_id, "order") VALUES (?, ?, ?, ?)',
+    ).run(id, trimmed, parentId, maxOrder.m + 1);
+    return { id, name: trimmed, parentId, order: maxOrder.m + 1 };
+  },
+
+  renameHierarchyNode(id: string, name: string): HierarchyNode {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      const err = new Error('NAME_REQUIRED') as Error & { code?: string };
+      err.code = 'NAME_REQUIRED';
+      throw err;
+    }
+    const res = db
+      .prepare('UPDATE hierarchy_nodes SET name = ? WHERE id = ?')
+      .run(trimmed, id) as { changes: number };
+    if (res.changes === 0) {
+      const err = new Error('NOT_FOUND') as Error & { code?: string };
+      err.code = 'NOT_FOUND';
+      throw err;
+    }
+    return this.getHierarchyNode(id)!;
+  },
+
+  getHierarchyNode(id: string): HierarchyNode | null {
+    const r = db
+      .prepare('SELECT id, name, parent_id, "order" FROM hierarchy_nodes WHERE id = ?')
+      .get(id) as HierarchyNodeRow | undefined;
+    if (!r) return null;
+    return { id: r.id, name: r.name, parentId: r.parent_id, order: r.order };
+  },
+
+  moveHierarchyNode(
+    id: string,
+    patch: { parentId?: string | null; order?: number },
+  ): HierarchyNode {
+    const existing = this.getHierarchyNode(id);
+    if (!existing) {
+      const err = new Error('NOT_FOUND') as Error & { code?: string };
+      err.code = 'NOT_FOUND';
+      throw err;
+    }
+
+    let nextParentId = existing.parentId;
+    if (patch.parentId !== undefined) {
+      if (patch.parentId !== null) {
+        if (patch.parentId === id) {
+          const err = new Error('CYCLE') as Error & { code?: string };
+          err.code = 'CYCLE';
+          throw err;
+        }
+        // Walk descendants of `id`; refuse if patch.parentId is among them.
+        const descendants = this.collectHierarchyDescendants(id);
+        if (descendants.has(patch.parentId)) {
+          const err = new Error('CYCLE') as Error & { code?: string };
+          err.code = 'CYCLE';
+          throw err;
+        }
+        const targetExists = db
+          .prepare('SELECT 1 FROM hierarchy_nodes WHERE id = ?')
+          .get(patch.parentId);
+        if (!targetExists) {
+          const err = new Error('PARENT_NOT_FOUND') as Error & { code?: string };
+          err.code = 'PARENT_NOT_FOUND';
+          throw err;
+        }
+      }
+      nextParentId = patch.parentId;
+    }
+
+    const sets: string[] = [];
+    const params: unknown[] = [];
+    if (patch.parentId !== undefined) {
+      sets.push('parent_id = ?');
+      params.push(nextParentId);
+    }
+    if (patch.order !== undefined) {
+      sets.push('"order" = ?');
+      params.push(patch.order);
+    }
+    if (sets.length) {
+      db.prepare(`UPDATE hierarchy_nodes SET ${sets.join(', ')} WHERE id = ?`).run(...params, id);
+    }
+    return this.getHierarchyNode(id)!;
+  },
+
+  // BFS descendants with cycle guard (parent_id cycles can only exist if someone
+  // bypassed the CYCLE check above, but defensive coding wins).
+  collectHierarchyDescendants(rootId: string): Set<string> {
+    const seen = new Set<string>();
+    const queue: string[] = [rootId];
+    while (queue.length > 0) {
+      const cur = queue.shift()!;
+      if (seen.has(cur)) continue;
+      seen.add(cur);
+      const kids = db
+        .prepare('SELECT id FROM hierarchy_nodes WHERE parent_id = ?')
+        .all(cur) as { id: string }[];
+      for (const k of kids) queue.push(k.id);
+    }
+    return seen;
+  },
+
+  deleteHierarchyNode(id: string): { ok: true; deleted: number } {
+    const seen = this.collectHierarchyDescendants(id);
+    const ids = Array.from(seen);
+    if (ids.length === 0) return { ok: true, deleted: 0 };
+
+    db.exec('BEGIN');
+    try {
+      const placeholders = ids.map(() => '?').join(',');
+      db.prepare(`DELETE FROM hierarchy_nodes WHERE id IN (${placeholders})`).run(...ids);
+      db.exec('COMMIT');
+    } catch (e) {
+      db.exec('ROLLBACK');
+      throw e;
+    }
+    return { ok: true, deleted: ids.length };
   },
 };

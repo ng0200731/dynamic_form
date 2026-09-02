@@ -1,4 +1,12 @@
-import type { Page, PageSummary, Row, Field, OptionList, GlobalTemplate } from './types';
+import type {
+  Page,
+  PageSummary,
+  Row,
+  Field,
+  OptionList,
+  GlobalTemplate,
+  HierarchyNode,
+} from './types';
 
 const BASE = '/api';
 
@@ -34,6 +42,23 @@ export const api = {
     }),
   deletePage: (id: string) => request<void>(`/pages/${id}`, { method: 'DELETE' }),
   linkTargets: (id: string) => request<PageSummary[]>(`/pages/${id}/link-targets`),
+  // ---- Hierarchy (structural skeleton, independent from pages) -------------
+  listHierarchy: () => request<HierarchyNode[]>('/hierarchy'),
+  createHierarchyNode: (name: string, parentId: string | null) =>
+    request<HierarchyNode>('/hierarchy', {
+      method: 'POST',
+      body: JSON.stringify({ name, parentId }),
+    }),
+  updateHierarchyNode: (
+    id: string,
+    patch: { name?: string; parentId?: string | null; order?: number },
+  ) =>
+    request<HierarchyNode>(`/hierarchy/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(patch),
+    }),
+  deleteHierarchyNode: (id: string) =>
+    request<void>(`/hierarchy/${id}`, { method: 'DELETE' }),
   optionLists: {
     list: (pageId: string) => request<OptionList[]>(`/pages/${pageId}/option-lists`),
     create: (pageId: string, name: string) =>
@@ -90,4 +115,4 @@ export function localId(): string {
   return 'local-' + Math.random().toString(36).slice(2, 10);
 }
 
-export type { Page, PageSummary, Row, Field, GlobalTemplate };
+export type { Page, PageSummary, Row, Field, GlobalTemplate, HierarchyNode };

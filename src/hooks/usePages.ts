@@ -61,11 +61,13 @@ export function usePages() {
   );
 
   const createPage = useCallback(
-    async (name: string, parentId: string | null) => {
+    async (name: string, parentId: string | null, navigateToEdit = true) => {
       const created = await api.createPage(name, parentId);
       await refreshList();
       await loadPage(created.id);
-      setMode('edit');
+      if (navigateToEdit) {
+        setMode('edit');
+      }
       return created;
     },
     [refreshList, loadPage],
@@ -86,6 +88,26 @@ export function usePages() {
     [refreshList, loadPage, selectedId],
   );
 
+  const renamePage = useCallback(
+    async (id: string, name: string) => {
+      await api.updatePage(id, { name });
+      await refreshList();
+      if (currentPage && currentPage.id === id) {
+        setCurrentPage({ ...currentPage, name });
+      }
+    },
+    [refreshList, currentPage],
+  );
+
+  // Move a page: set its parent and/or re-order among siblings.
+  const movePage = useCallback(
+    async (id: string, patch: { parentId?: string | null; order?: number }) => {
+      await api.updatePage(id, patch);
+      await refreshList();
+    },
+    [refreshList],
+  );
+
   return {
     pages,
     selectedId,
@@ -102,6 +124,8 @@ export function usePages() {
     reparent,
     createPage,
     removePage,
+    renamePage,
+    movePage,
     setCurrentPage,
   };
 }

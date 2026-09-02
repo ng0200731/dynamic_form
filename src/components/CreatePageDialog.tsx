@@ -8,9 +8,8 @@ interface Props {
   onCreate: (name: string, parentId: string | null) => Promise<{ id: string }>;
 }
 
-export function CreatePageDialog({ pages, onClose, onCreate }: Props) {
+export function CreatePageDialog({ onClose, onCreate }: Props) {
   const [name, setName] = useState('');
-  const [parentId, setParentId] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -23,7 +22,7 @@ export function CreatePageDialog({ pages, onClose, onCreate }: Props) {
     setBusy(true);
     setError(null);
     try {
-      await onCreate(name.trim(), parentId || null);
+      await onCreate(name.trim(), null);
       onClose();
     } catch (err) {
       const msg = (err as Error).message;
@@ -51,18 +50,6 @@ export function CreatePageDialog({ pages, onClose, onCreate }: Props) {
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Contact Us"
             />
-          </label>
-
-          <label className={styles.field}>
-            <span>Parent page (optional)</span>
-            <select value={parentId} onChange={(e) => setParentId(e.target.value)}>
-              <option value="">— None (top level) —</option>
-              {pages.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
           </label>
 
           {error && <p className={styles.error}>{error}</p>}

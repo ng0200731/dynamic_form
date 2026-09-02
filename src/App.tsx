@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { usePages } from './hooks/usePages';
+import { useHierarchy } from './hooks/useHierarchy';
 import { Sidebar } from './components/Sidebar';
 import { Toolbar } from './components/Toolbar';
 import { Editor } from './components/Editor';
@@ -27,6 +28,8 @@ export function App() {
     cameFromPages,
     setCameFromPages,
   } = usePages();
+
+  const hierarchy = useHierarchy();
 
   // Bumped whenever a global template is created, to force GlobalViewPanel to
   // remount and reload even if mode is already 'global'.
@@ -85,17 +88,27 @@ export function App() {
         mode={mode}
         onModeChange={setMode}
         onGlobalSaved={() => setGlobalReloadNonce((n) => n + 1)}
+        onSelectPage={handleSelect}
+        selectedId={selectedId}
       />
       <main className={styles.main}>
         {loading && <div className={styles.status}>Loading…</div>}
         {error && <div className={styles.statusErr}>{error}</div>}
-        {!currentPage && !loading && (
+        {!currentPage && !loading && mode !== 'hierarchy' && (
           <div className={styles.empty}>
             <p>No page selected.</p>
             <p>Create a page from the sidebar to begin.</p>
           </div>
         )}
-        {currentPage && (
+        {mode === 'hierarchy' ? (
+          <HierarchyPanel
+            nodes={hierarchy.nodes}
+            onRename={hierarchy.renameNode}
+            onMove={hierarchy.moveNode}
+            onCreate={hierarchy.createNode}
+            onDelete={hierarchy.deleteNode}
+          />
+        ) : currentPage ? (
           <>
             <Toolbar
               page={currentPage}
@@ -139,8 +152,6 @@ export function App() {
                   setCameFromPages={setCameFromPages}
                   setPreviewOrigin={setPreviewOrigin}
                 />
-              ) : mode === 'hierarchy' ? (
-                <HierarchyPanel onChanged={loadPage} />
               ) : (
                 <Preview
                   page={currentPage}
@@ -151,7 +162,7 @@ export function App() {
               )}
             </div>
           </>
-        )}
+        ) : null}
       </main>
       {selectedId && (
         <button

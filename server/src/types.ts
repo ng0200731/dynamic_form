@@ -81,3 +81,12 @@ export interface PageSummary {
   parentId: string | null;
   order: number;
 }
+
+// A node in the structural skeleton. Independent from Page — no slug, no content.
+// Built/edited only through the Hierarchy panel.
+export interface HierarchyNode {
+  id: string;
+  name: string;
+  parentId: string | null;
+  order: number;
+}
